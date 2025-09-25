@@ -1,93 +1,71 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from . import models
-from .deps import get_db
-import logging
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import JSONResponse
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from datetime import datetime
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+# Initialize FastAPI app
 app = FastAPI(
     title="QuantumCertify API",
-    description="API for quantum-safe certificate algorithms",
+    description="Certificate analysis and quantum-safe cryptography validation",
     version="1.0.0"
 )
-
-# Initialize database tables
-try:
-    from .database import engine, Base
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created successfully")
-except Exception as e:
-    logger.warning(f"Database initialization failed: {e}")
-    logger.info("API will run in mock mode")
 
 @app.get("/")
 def read_root():
     return {"message": "QuantumCertify API is running", "version": "1.0.0"}
 
+@app.post("/upload-certificate")
+async def upload_certificate(file: UploadFile = File(...)):
+    """
+    Upload and analyze a certificate file (PEM or DER format)
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file uploaded")
+    
+    try:
+        cert_bytes = await file.read()
+        
+        # Try to parse the certificate
+        try:
+            # Try PEM first
+            cert = x509.load_pem_x509_certificate(cert_bytes, default_backend())
+        except Exception:
+            try:
+                # Fallback to DER
+                cert = x509.load_der_x509_certificate(cert_bytes, default_backend())
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Invalid certificate format: {str(e)}")
+
+        # Extract certificate details
+        issuer = cert.issuer.rfc4514_string()
+        subject = cert.subject.rfc4514_string()
+        public_key = cert.public_key()
+        key_type = public_key.__class__.__name__
+        key_size = getattr(public_key, "key_size", None)
+        sig_algo = cert.signature_algorithm_oid._name
+        expiry_date = cert.not_valid_after
+        
+        # Determine if the algorithm is quantum-safe
+        is_quantum_safe = "dilithium" in sig_algo.lower() or "kyber" in sig_algo.lower() or "falcon" in sig_algo.lower()
+
+        return {
+            "file_name": file.filename,
+            "issuer": issuer,
+            "subject": subject,
+            "key_type": key_type,
+            "key_size": key_size,
+            "signature_algorithm": sig_algo,
+            "expiry_date": expiry_date.isoformat(),
+            "is_quantum_safe": is_quantum_safe,
+            "status": "Certificate parsed successfully"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing certificate: {str(e)}")
+
 @app.get("/health")
 def health_check():
-    try:
-        # Try to get a database session to test connection
-        from .database import SessionLocal
-        db = SessionLocal()
-        db.execute("SELECT 1")
-        db.close()
-        return {"status": "healthy", "database": "connected"}
-    except Exception as e:
-        return {"status": "healthy", "database": "disconnected", "error": str(e)}
-
-# GET all public key algorithms
-@app.get("/public-key-algorithms")
-def get_public_key_algorithms(db: Session = Depends(get_db)):
-    try:
-        algorithms = db.query(models.PublicKeyAlgorithm).all()
-        return algorithms
-    except SQLAlchemyError as e:
-        logger.error(f"Database error: {e}")
-        # Return mock data when database is unavailable
-        return [
-            {
-                "id": 1,
-                "public_key_algorithm_name": "RSA",
-                "public_key_algorithm_oid": "1.2.840.113549.1.1.1",
-                "category": "Classical",
-                "is_pqc": False
-            },
-            {
-                "id": 2,
-                "public_key_algorithm_name": "CRYSTALS-Kyber",
-                "public_key_algorithm_oid": "2.16.840.1.101.3.4.4.1",
-                "category": "Post-Quantum",
-                "is_pqc": True
-            }
-        ]
-
-# GET all signature algorithms
-@app.get("/signature-algorithms")
-def get_signature_algorithms(db: Session = Depends(get_db)):
-    try:
-        algorithms = db.query(models.SignatureAlgorithm).all()
-        return algorithms
-    except SQLAlchemyError as e:
-        logger.error(f"Database error: {e}")
-        # Return mock data when database is unavailable
-        return [
-            {
-                "id": 1,
-                "signature_algorithm_name": "RSA-PSS",
-                "signature_algorithm_oid": "1.2.840.113549.1.1.10",
-                "category": "Classical",
-                "is_pqc": False
-            },
-            {
-                "id": 2,
-                "signature_algorithm_name": "CRYSTALS-Dilithium",
-                "signature_algorithm_oid": "2.16.840.1.101.3.4.3.1",
-                "category": "Post-Quantum",
-                "is_pqc": True
-            }
-        ]
+    return {"status": "healthy", "service": "QuantumCertify API"}
