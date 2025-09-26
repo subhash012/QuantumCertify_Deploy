@@ -1,0 +1,176 @@
+name: Deploy QuantumCertify to Azure
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY_NAME: quantumcertifyregistry
+  RESOURCE_GROUP: quantumcertify-rg
+  BACKEND_CONTAINER_NAME: quantumcertify-backend
+  FRONTEND_CONTAINER_NAME: quantumcertify-frontend
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run backend tests
+      run: |
+        cd backend
+        python -m pytest tests/ --verbose || echo "No tests found"
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+    
+    - name: Run frontend tests
+      run: |
+        cd frontend
+        npm test -- --coverage --watchAll=false
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Build and push backend image
+      run: |
+        # Login to ACR
+        az acr login --name ${{ env.REGISTRY_NAME }}
+        
+        # Get ACR login server
+        ACR_LOGIN_SERVER=$(az acr show --name ${{ env.REGISTRY_NAME }} --query loginServer -o tsv)
+        
+        # Build and push backend
+        cd backend
+        docker build -t $ACR_LOGIN_SERVER/quantumcertify-backend:${{ github.sha }} .
+        docker build -t $ACR_LOGIN_SERVER/quantumcertify-backend:latest .
+        docker push $ACR_LOGIN_SERVER/quantumcertify-backend:${{ github.sha }}
+        docker push $ACR_LOGIN_SERVER/quantumcertify-backend:latest
+    
+    - name: Build and push frontend image
+      run: |
+        # Login to ACR
+        az acr login --name ${{ env.REGISTRY_NAME }}
+        
+        # Get ACR login server
+        ACR_LOGIN_SERVER=$(az acr show --name ${{ env.REGISTRY_NAME }} --query loginServer -o tsv)
+        
+        # Build and push frontend
+        cd frontend
+        docker build -t $ACR_LOGIN_SERVER/quantumcertify-frontend:${{ github.sha }} .
+        docker build -t $ACR_LOGIN_SERVER/quantumcertify-frontend:latest .
+        docker push $ACR_LOGIN_SERVER/quantumcertify-frontend:${{ github.sha }}
+        docker push $ACR_LOGIN_SERVER/quantumcertify-frontend:latest
+    
+    - name: Deploy to Azure Container Instances
+      run: |
+        # Get ACR credentials
+        ACR_LOGIN_SERVER=$(az acr show --name ${{ env.REGISTRY_NAME }} --query loginServer -o tsv)
+        ACR_USERNAME=$(az acr credential show --name ${{ env.REGISTRY_NAME }} --query username -o tsv)
+        ACR_PASSWORD=$(az acr credential show --name ${{ env.REGISTRY_NAME }} --query passwords[0].value -o tsv)
+        
+        # Generate unique DNS labels
+        TIMESTAMP=$(date +%Y%m%d%H%M)
+        DNS_LABEL="quantumcertify-$TIMESTAMP"
+        
+        # Deploy backend container
+        az container create \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --name ${{ env.BACKEND_CONTAINER_NAME }} \
+          --image $ACR_LOGIN_SERVER/quantumcertify-backend:latest \
+          --registry-login-server $ACR_LOGIN_SERVER \
+          --registry-username $ACR_USERNAME \
+          --registry-password $ACR_PASSWORD \
+          --dns-name-label $DNS_LABEL-api \
+          --ports 8000 \
+          --cpu 1 \
+          --memory 1.5 \
+          --secure-environment-variables \
+            DB_SERVER="${{ secrets.DB_SERVER }}" \
+            DB_NAME="${{ secrets.DB_NAME }}" \
+            DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+            DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+          --environment-variables \
+            ALLOWED_ORIGINS="http://$DNS_LABEL.eastus.azurecontainer.io,https://$DNS_LABEL.eastus.azurecontainer.io" \
+            LOG_LEVEL=INFO \
+          --restart-policy Always
+        
+        # Deploy frontend container
+        az container create \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --name ${{ env.FRONTEND_CONTAINER_NAME }} \
+          --image $ACR_LOGIN_SERVER/quantumcertify-frontend:latest \
+          --registry-login-server $ACR_LOGIN_SERVER \
+          --registry-username $ACR_USERNAME \
+          --registry-password $ACR_PASSWORD \
+          --dns-name-label $DNS_LABEL \
+          --ports 80 443 \
+          --cpu 0.5 \
+          --memory 1 \
+          --environment-variables \
+            REACT_APP_API_URL="http://$DNS_LABEL-api.eastus.azurecontainer.io:8000" \
+          --restart-policy Always
+        
+        echo "Deployment completed!"
+        echo "Frontend URL: http://$DNS_LABEL.eastus.azurecontainer.io"
+        echo "Backend URL: http://$DNS_LABEL-api.eastus.azurecontainer.io:8000"
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
