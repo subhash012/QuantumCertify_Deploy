@@ -192,11 +192,17 @@ deploy_containers() {
         --cpu 1 \
         --memory 1.5 \
         --secure-environment-variables \
+            GEMINI_API_KEY="$GEMINI_API_KEY" \
             DB_SERVER="$DB_SERVER" \
             DB_NAME="$DB_NAME" \
             DB_USERNAME="$DB_USERNAME" \
             DB_PASSWORD="$DB_PASSWORD" \
-            GEMINI_API_KEY="$GEMINI_API_KEY" \
+            DB_PORT="1433" \
+            DB_DRIVER="SQL+Server" \
+            CONTACT_EMAIL="$CONTACT_EMAIL" \
+            DEVELOPER_NAME="$DEVELOPER_NAME" \
+            PROJECT_VERSION="2.0.0" \
+            SECRET_KEY="$SECRET_KEY" \
         --environment-variables \
             ALLOWED_ORIGINS="http://$DNS_NAME_LABEL.eastus.azurecontainer.io,https://$DNS_NAME_LABEL.eastus.azurecontainer.io" \
             LOG_LEVEL=INFO \

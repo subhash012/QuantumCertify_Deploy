@@ -1,4 +1,13 @@
-# 🚀 QuantumCertify Azure Deployment - Complete Guide
+# 🚀 QuantumCertify Azure Deployment - Comple### 1. Prepare Environment
+```powershell
+# In PowerShell, set your environment variables
+$env:GEMINI_API_KEY = "your_actual_gemini_api_key_here"
+$env:CONTACT_EMAIL = "your.email@example.com"
+$env:DEVELOPER_NAME = "Your Name"
+
+# Navigate to your project directory
+cd C:\Users\VSubhash\QuantumCertify
+```
 
 ## 📋 What I've Prepared for You
 

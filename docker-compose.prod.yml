@@ -8,12 +8,19 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DB_SERVER=${DB_SERVER}
       - DB_NAME=${DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DB_PORT=${DB_PORT:-1433}
+      - DB_DRIVER=${DB_DRIVER:-SQL+Server}
+      - CONTACT_EMAIL=${CONTACT_EMAIL}
+      - DEVELOPER_NAME=${DEVELOPER_NAME}
+      - PROJECT_VERSION=${PROJECT_VERSION}
+      - SECRET_KEY=${SECRET_KEY}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - DEBUG=${DEBUG:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     networks:
       - quantumcertify-network

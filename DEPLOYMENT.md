@@ -4,6 +4,22 @@ This guide will help you deploy QuantumCertify to Microsoft Azure using Docker c
 
 ## Prerequisites
 
+### 0. Local Development Environment
+Before deploying to Azure, ensure your application works locally:
+```bash
+# Backend setup
+cd backend
+cp .env.template .env
+# Edit .env with your local configuration
+pip install -r requirements.txt
+python run_server.py
+
+# Frontend setup (in another terminal)
+cd frontend
+npm install
+npm start
+```
+
 ### 1. Install Required Tools
 - **Azure CLI**: [Download and install](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 - **Docker Desktop**: [Download and install](https://www.docker.com/products/docker-desktop)
@@ -15,13 +31,19 @@ This guide will help you deploy QuantumCertify to Microsoft Azure using Docker c
 3. **Permissions**: You need Owner or Contributor permissions on the subscription
 
 ### 3. Environment Variables
-Set the following environment variable before deployment:
+Set the following environment variables before deployment:
 ```bash
 # For Bash/Linux
 export GEMINI_API_KEY="your_gemini_api_key_here"
+export CONTACT_EMAIL="your.email@example.com"
+export DEVELOPER_NAME="Your Name"
+export SECRET_KEY="your-production-secret-key"
 
 # For PowerShell/Windows
 $env:GEMINI_API_KEY = "your_gemini_api_key_here"
+$env:CONTACT_EMAIL = "your.email@example.com"
+$env:DEVELOPER_NAME = "Your Name"
+$env:SECRET_KEY = "your-production-secret-key"
 ```
 
 ## Quick Deployment
@@ -33,6 +55,9 @@ cd C:\Users\YourName\QuantumCertify
 
 # Set environment variables
 $env:GEMINI_API_KEY = "your_gemini_api_key_here"
+$env:CONTACT_EMAIL = "your.email@example.com"
+$env:DEVELOPER_NAME = "Your Name"
+$env:SECRET_KEY = "your-production-secret-key"
 
 # Run deployment script
 .\deploy-azure.ps1
@@ -45,6 +70,9 @@ cd /path/to/QuantumCertify
 
 # Set environment variables
 export GEMINI_API_KEY="your_gemini_api_key_here"
+export CONTACT_EMAIL="your.email@example.com"
+export DEVELOPER_NAME="Your Name"
+export SECRET_KEY="your-production-secret-key"
 
 # Make script executable and run
 chmod +x deploy-azure.sh
@@ -130,11 +158,20 @@ az container create \
     --dns-name-label quantumcertify-api \
     --ports 8000 \
     --secure-environment-variables \
+        GEMINI_API_KEY=$GEMINI_API_KEY \
         DB_SERVER=quantumcertify-sql.database.windows.net \
         DB_NAME=QuantumCertifyDB \
         DB_USERNAME=quantumadmin \
         DB_PASSWORD=YourSecurePassword123! \
-        GEMINI_API_KEY=$GEMINI_API_KEY
+        DB_PORT=1433 \
+        DB_DRIVER=SQL+Server \
+        SECRET_KEY=$SECRET_KEY \
+    --environment-variables \
+        CONTACT_EMAIL=$CONTACT_EMAIL \
+        DEVELOPER_NAME=$DEVELOPER_NAME \
+        PROJECT_VERSION=2.0.0 \
+        ALLOWED_ORIGINS=http://quantumcertify-app.eastus.azurecontainer.io \
+        DEBUG=false
 
 # Deploy frontend
 az container create \
@@ -181,6 +218,36 @@ Deploy as web applications:
 1. Create App Service plans
 2. Deploy containers to App Service
 3. Configure application settings
+
+## Environment Configuration
+
+### Local Development Environment Variables
+Create a `.env` file in the `backend` directory:
+```properties
+# Google Gemini AI Configuration
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# Database Configuration
+DB_SERVER=localhost
+DB_NAME=QuantumCertifyDB
+DB_USERNAME=sa
+DB_PASSWORD=your-secure-password
+DB_PORT=1433
+DB_DRIVER=SQL+Server
+
+# Application Configuration
+CONTACT_EMAIL=your.email@example.com
+DEVELOPER_NAME=Your Name
+PROJECT_VERSION=2.0.0
+
+# Security Configuration
+SECRET_KEY=your-super-secret-key-change-this-in-production
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+DEBUG=true
+```
+
+### Production Environment Variables
+For Azure deployment, ensure all environment variables are properly set in your deployment scripts.
 
 ## Post-Deployment Configuration
 
@@ -252,8 +319,10 @@ az container show --resource-group quantumcertify-rg --name quantumcertify-backe
 
 #### Database Connection Issues
 - Verify firewall rules allow Azure services
-- Check connection string format
-- Ensure credentials are correct
+- Check connection string format with all required parameters (DB_SERVER, DB_PORT, DB_DRIVER)
+- Ensure credentials are correct (DB_USERNAME, DB_PASSWORD)
+- Verify environment variables are properly set in container
+- Check database connection pooling configuration
 
 #### Image Pull Errors
 - Verify registry credentials
@@ -298,6 +367,10 @@ Azure SQL Database provides automatic backups
 - Enable Application Insights
 - Set up alerts for failures
 - Monitor performance metrics
+- Track certificate analysis requests
+- Monitor database connection health
+- Track API response times and error rates
+- Monitor Gemini AI API usage and costs
 
 ### 2. Infrastructure Monitoring
 - Use Azure Monitor

@@ -8,12 +8,19 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DB_SERVER=${DB_SERVER:-localhost}
       - DB_NAME=${DB_NAME:-QuantumCertifyDB}
       - DB_USERNAME=${DB_USERNAME:-sa}
       - DB_PASSWORD=${DB_PASSWORD}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DB_PORT=${DB_PORT:-1433}
+      - DB_DRIVER=${DB_DRIVER:-SQL+Server}
+      - CONTACT_EMAIL=${CONTACT_EMAIL:-admin@example.com}
+      - DEVELOPER_NAME=${DEVELOPER_NAME:-QuantumCertify Team}
+      - PROJECT_VERSION=${PROJECT_VERSION:-2.0.0}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
       - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:80
+      - DEBUG=${DEBUG:-true}
       - LOG_LEVEL=INFO
     volumes:
       - ./backend:/app

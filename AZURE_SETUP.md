@@ -71,21 +71,42 @@ If you need to set up Azure resources manually, follow the detailed guide in `DE
 ### For Local Development
 Create `.env` file in backend directory:
 ```
+# Google Gemini AI Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Database Configuration
 DB_SERVER=your-server.database.windows.net
 DB_NAME=QuantumCertifyDB
 DB_USERNAME=your-username
-DB_PASSWORD=your-password
-GEMINI_API_KEY=your-gemini-api-key
+DB_PASSWORD=your-secure-password
+DB_PORT=1433
+DB_DRIVER=SQL+Server
+
+# Application Configuration
+CONTACT_EMAIL=your.email@example.com
+DEVELOPER_NAME=Your Name
+PROJECT_VERSION=2.0.0
+
+# Security Configuration
+SECRET_KEY=your-super-secret-key-change-this-in-production
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+DEBUG=false
 ```
 
 ### For GitHub Actions (if using CI/CD)
 Add these secrets to your GitHub repository:
 - `AZURE_CREDENTIALS`: Service principal credentials JSON
+- `GEMINI_API_KEY`: Google AI API key
 - `DB_SERVER`: Azure SQL server name
 - `DB_NAME`: Database name
 - `DB_USERNAME`: Database username
 - `DB_PASSWORD`: Database password
-- `GEMINI_API_KEY`: Google AI API key
+- `DB_PORT`: Database port
+- `DB_DRIVER`: Database driver
+- `SECRET_KEY`: Application secret key
+- `CONTACT_EMAIL`: Contact email
+- `DEVELOPER_NAME`: Developer name
+- `PROJECT_VERSION`: Application version
 
 ## 💰 Cost Estimation
 

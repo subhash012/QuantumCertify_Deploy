@@ -5,9 +5,10 @@ This guide provides step-by-step instructions for manually testing all features 
 ## Prerequisites
 
 1. **Backend Server**: Ensure the FastAPI backend is running on `http://localhost:8000`
-2. **Frontend Server** (optional): React frontend on `http://localhost:3000`
-3. **Database**: SQL Server database with proper credentials configured
-4. **Environment**: All environment variables set in backend/.env
+2. **Frontend Server**: React frontend with routing on `http://localhost:3000`
+3. **Database**: SQL Server database with connection pooling and health checks
+4. **Environment**: All environment variables properly configured in backend/.env
+5. **Dependencies**: Latest React packages including react-router-dom for navigation
 
 ## Test Categories
 
@@ -138,14 +139,27 @@ This guide provides step-by-step instructions for manually testing all features 
   3. Verify graceful error handling
   4. Restore connection and test recovery
 
-### 6. Frontend Tests (If Available)
+### 6. Frontend Tests (React SPA with Routing)
 
 #### 6.1 Page Load Test
-- **URL**: `http://localhost:3000`
+- **URLs**: 
+  - Dashboard: `http://localhost:3000/`
+  - Upload: `http://localhost:3000/upload`
+  - About: `http://localhost:3000/about`
 - **Test Steps**:
-  1. Open in browser
-  2. Verify all components load
-  3. Check for JavaScript errors in console
+  1. Open each URL in browser
+  2. Verify routing works correctly
+  3. Check navigation menu functionality
+  4. Verify all components load
+  5. Check for JavaScript errors in console
+
+#### 6.2 Navigation Testing
+- **Test Steps**:
+  1. Click on each navigation link
+  2. Verify URL changes correctly
+  3. Verify page content updates
+  4. Test browser back/forward buttons
+  5. Test direct URL access
 
 #### 6.2 API Status Display
 - **Test Steps**:

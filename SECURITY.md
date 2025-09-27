@@ -8,20 +8,36 @@ This document outlines the security measures implemented in QuantumCertify and h
 
 All sensitive information has been moved to environment variables to prevent accidental exposure:
 
+### AI Service Configuration
+- `GEMINI_API_KEY`: Google Gemini AI API key ⚠️ **CRITICAL - Keep Secure**
+
 ### Database Credentials
 - `DB_SERVER`: Azure SQL Server hostname
 - `DB_NAME`: Database name
 - `DB_USERNAME`: Database username  
 - `DB_PASSWORD`: Database password ⚠️ **CRITICAL - Keep Secure**
 - `DB_PORT`: Database port (default: 1433)
-- `DB_DRIVER`: ODBC driver specification
+- `DB_DRIVER`: ODBC driver specification (default: SQL+Server)
 
-### API Keys
-- `GEMINI_API_KEY`: Google Gemini AI API key ⚠️ **CRITICAL - Keep Secure**
+### Application Configuration
+- `CONTACT_EMAIL`: Support/contact email address
+- `DEVELOPER_NAME`: Developer or organization name
+- `PROJECT_VERSION`: Application version number
 
-### Application Security
+### Security Configuration
 - `SECRET_KEY`: Application secret key ⚠️ **CRITICAL - Keep Secure**
 - `ALLOWED_ORIGINS`: CORS allowed origins (comma-separated)
+- `DEBUG`: Debug mode flag (true/false)
+
+### Environment Variables Security
+
+1. **Never commit `.env` files**: Always add `.env` to `.gitignore`
+2. **Use strong secrets**: Generate cryptographically secure keys for SECRET_KEY
+3. **Rotate credentials regularly**: Change API keys, database passwords, and secret keys periodically
+4. **Validate environment variables**: All required variables are validated at startup
+5. **Production vs Development**: Use different configurations for different environments
+6. **Debug mode**: Always set DEBUG=false in production
+7. **CORS configuration**: Restrict ALLOWED_ORIGINS to your actual domains
 
 ## 🛡️ Security Best Practices
 
