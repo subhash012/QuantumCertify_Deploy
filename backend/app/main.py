@@ -1,6 +1,8 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from sqlalchemy.orm import Session
@@ -8,9 +10,16 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Dict
 import json
 import re
+import time
+
+# Import production logging configuration
+from .logging_config import setup_production_logging, security_logger, performance_logger
+
+# Initialize production logging
+setup_production_logging()
 
 # Import database components with error handling
 try:
@@ -243,6 +252,12 @@ def _get_rule_based_recommendations(algorithm_name: str, algorithm_type: str) ->
         "cost_benefit_analysis": f"High priority migration due to {recommendation['migration_priority']} quantum threat level"
     }
 
+# Production security configuration
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+SSL_ENABLED = os.getenv("SSL_ENABLED", "false").lower() == "true"
+FORCE_HTTPS = os.getenv("FORCE_HTTPS", "false").lower() == "true"
+SECURE_COOKIES = os.getenv("SECURE_COOKIES", "false").lower() == "true"
+
 # Initialize FastAPI app with environment configuration
 app = FastAPI(
     title="QuantumCertify API - AI-Powered PQC Analysis",
@@ -255,17 +270,111 @@ app = FastAPI(
     license_info={
         "name": "MIT",
     },
+    docs_url="/docs" if DEBUG_MODE else None,  # Disable docs in production
+    redoc_url="/redoc" if DEBUG_MODE else None,  # Disable redoc in production
 )
 
-# Add CORS middleware with environment configuration
+# Production Security Middleware
+if ENVIRONMENT == "production":
+    # Force HTTPS in production
+    if FORCE_HTTPS:
+        app.add_middleware(HTTPSRedirectMiddleware)
+    
+    # Trusted host middleware for production domains
+    TRUSTED_HOSTS = ["quantumcertify.tech", "www.quantumcertify.tech", "api.quantumcertify.tech"]
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=TRUSTED_HOSTS
+    )
+
+# Enhanced CORS middleware with environment configuration
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],  # Restrict methods in production
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+    ],
+    expose_headers=["X-Process-Time"],
 )
+
+# Security headers middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    
+    # Security headers for production
+    if ENVIRONMENT == "production":
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        
+        # Content Security Policy
+        csp = (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.quantumcertify.tech; "
+            "frame-ancestors 'none';"
+        )
+        response.headers["Content-Security-Policy"] = csp
+    
+    # Performance monitoring header
+    import time
+    process_time = time.time() - request.state.start_time if hasattr(request.state, 'start_time') else 0
+    response.headers["X-Process-Time"] = str(process_time)
+    
+    return response
+
+# Request timing and logging middleware
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    request.state.start_time = start_time
+    
+    # Get client IP
+    client_ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+    
+    response = await call_next(request)
+    
+    # Log request performance
+    process_time = time.time() - start_time
+    performance_logger.log_request_performance(
+        endpoint=str(request.url.path),
+        method=request.method,
+        duration=process_time,
+        status_code=response.status_code,
+        ip_address=client_ip
+    )
+    
+    # Log access
+    access_logger = logging.getLogger('access')
+    access_logger.info(
+        f"{request.method} {request.url.path} - {response.status_code}",
+        extra={
+            'extra_data': {
+                'method': request.method,
+                'path': request.url.path,
+                'status_code': response.status_code,
+                'duration': process_time,
+                'ip_address': client_ip,
+                'user_agent': request.headers.get('User-Agent')
+            }
+        }
+    )
+    
+    return response
 
 # Dependency to get DB session
 def get_db():
@@ -283,41 +392,94 @@ def get_db():
         if 'db' in locals() and db:
             db.close()
 
+# File-based Statistics Management (Fallback when database is unavailable)
+STATS_FILE_PATH = "statistics.json"
+
+def load_statistics_from_file():
+    """Load statistics from JSON file"""
+    try:
+        if os.path.exists(STATS_FILE_PATH):
+            with open(STATS_FILE_PATH, 'r') as f:
+                stats = json.load(f)
+                return stats
+        else:
+            # Initialize with default values
+            default_stats = {
+                "total_analyzed": 0,
+                "quantum_safe_count": 0,
+                "classical_count": 0,
+                "last_updated": None,
+                "data_source": "file"
+            }
+            save_statistics_to_file(default_stats)
+            return default_stats
+    except Exception as e:
+        logging.error(f"Error loading statistics from file: {e}")
+        return {
+            "total_analyzed": 0,
+            "quantum_safe_count": 0,
+            "classical_count": 0,
+            "last_updated": None,
+            "data_source": "error"
+        }
+
+def save_statistics_to_file(stats):
+    """Save statistics to JSON file"""
+    try:
+        stats["last_updated"] = datetime.utcnow().isoformat()
+        with open(STATS_FILE_PATH, 'w') as f:
+            json.dump(stats, f, indent=2)
+    except Exception as e:
+        logging.error(f"Error saving statistics to file: {e}")
+
 # Statistics Management Functions
 def save_certificate_analysis(db: Session, analysis_data: dict):
-    """Save certificate analysis to database for tracking"""
-    if not db or not DATABASE_AVAILABLE:
-        return
+    """Save certificate analysis to database or file for tracking"""
+    # Determine if certificate is quantum safe
+    is_quantum_safe = False
+    if analysis_data.get('cryptographic_analysis'):
+        public_key_safe = analysis_data['cryptographic_analysis'].get('public_key', {}).get('is_quantum_safe', False)
+        signature_safe = analysis_data['cryptographic_analysis'].get('signature', {}).get('is_quantum_safe', False)
+        is_quantum_safe = public_key_safe and signature_safe
     
+    # Try database first, then fallback to file
+    if db and DATABASE_AVAILABLE:
+        try:
+            # Save individual analysis record
+            certificate_record = CertificateAnalysis(
+                file_name=analysis_data.get('file_name', ''),
+                subject=analysis_data.get('certificate_info', {}).get('subject', ''),
+                issuer=analysis_data.get('certificate_info', {}).get('issuer', ''),
+                public_key_algorithm=analysis_data.get('cryptographic_analysis', {}).get('public_key', {}).get('algorithm', ''),
+                signature_algorithm=analysis_data.get('cryptographic_analysis', {}).get('signature', {}).get('algorithm', ''),
+                is_quantum_safe=is_quantum_safe,
+                overall_risk_level=analysis_data.get('security_assessment', {}).get('risk_level', 'UNKNOWN'),
+                ai_powered=analysis_data.get('system_info', {}).get('ai_powered', False)
+            )
+            
+            db.add(certificate_record)
+            db.commit()
+            
+            # Update analytics summary
+            update_analytics_summary(db, is_quantum_safe)
+            return
+            
+        except Exception as e:
+            logging.error(f"Error saving certificate analysis to database: {e}")
+            db.rollback()
+    
+    # Fallback to file-based storage
     try:
-        # Determine if certificate is quantum safe
-        is_quantum_safe = False
-        if analysis_data.get('cryptographic_analysis'):
-            public_key_safe = analysis_data['cryptographic_analysis'].get('public_key', {}).get('is_quantum_safe', False)
-            signature_safe = analysis_data['cryptographic_analysis'].get('signature', {}).get('is_quantum_safe', False)
-            is_quantum_safe = public_key_safe and signature_safe
-        
-        # Save individual analysis record
-        certificate_record = CertificateAnalysis(
-            file_name=analysis_data.get('file_name', ''),
-            subject=analysis_data.get('certificate_info', {}).get('subject', ''),
-            issuer=analysis_data.get('certificate_info', {}).get('issuer', ''),
-            public_key_algorithm=analysis_data.get('cryptographic_analysis', {}).get('public_key', {}).get('algorithm', ''),
-            signature_algorithm=analysis_data.get('cryptographic_analysis', {}).get('signature', {}).get('algorithm', ''),
-            is_quantum_safe=is_quantum_safe,
-            overall_risk_level=analysis_data.get('security_assessment', {}).get('risk_level', 'UNKNOWN'),
-            ai_powered=analysis_data.get('system_info', {}).get('ai_powered', False)
-        )
-        
-        db.add(certificate_record)
-        db.commit()
-        
-        # Update analytics summary
-        update_analytics_summary(db, is_quantum_safe)
-        
+        stats = load_statistics_from_file()
+        stats["total_analyzed"] += 1
+        if is_quantum_safe:
+            stats["quantum_safe_count"] += 1
+        else:
+            stats["classical_count"] += 1
+        save_statistics_to_file(stats)
+        logging.info(f"Certificate analysis saved to file. Quantum Safe: {is_quantum_safe}")
     except Exception as e:
-        logging.error(f"Error saving certificate analysis: {e}")
-        db.rollback()
+        logging.error(f"Error saving certificate analysis to file: {e}")
 
 def update_analytics_summary(db: Session, is_quantum_safe: bool):
     """Update the analytics summary table"""
@@ -349,40 +511,41 @@ def update_analytics_summary(db: Session, is_quantum_safe: bool):
         db.rollback()
 
 def get_dashboard_statistics(db: Session):
-    """Get dashboard statistics from database"""
-    if not db or not DATABASE_AVAILABLE:
-        return {
-            "total_analyzed": 0,
-            "quantum_safe_count": 0,
-            "classical_count": 0,
-            "data_source": "fallback"
-        }
-    
-    try:
-        summary = db.query(AnalyticsSummary).first()
-        
-        if summary:
-            return {
-                "total_analyzed": summary.total_analyzed,
-                "quantum_safe_count": summary.quantum_safe_count,
-                "classical_count": summary.classical_count,
-                "last_updated": summary.last_updated.isoformat() if summary.last_updated else None,
-                "data_source": "database"
-            }
-        else:
-            return {
-                "total_analyzed": 0,
-                "quantum_safe_count": 0,
-                "classical_count": 0,
-                "data_source": "empty_database"
-            }
+    """Get dashboard statistics from database or file"""
+    # Try database first
+    if db and DATABASE_AVAILABLE:
+        try:
+            summary = db.query(AnalyticsSummary).first()
             
+            if summary:
+                return {
+                    "total_analyzed": summary.total_analyzed,
+                    "quantum_safe_count": summary.quantum_safe_count,
+                    "classical_count": summary.classical_count,
+                    "last_updated": summary.last_updated.isoformat() if summary.last_updated else None,
+                    "data_source": "database"
+                }
+                
+        except Exception as e:
+            logging.error(f"Error retrieving dashboard statistics from database: {e}")
+    
+    # Fallback to file-based storage
+    try:
+        stats = load_statistics_from_file()
+        return {
+            "total_analyzed": stats["total_analyzed"],
+            "quantum_safe_count": stats["quantum_safe_count"],
+            "classical_count": stats["classical_count"],
+            "last_updated": stats.get("last_updated"),
+            "data_source": "file"
+        }
     except Exception as e:
-        logging.error(f"Error retrieving dashboard statistics: {e}")
+        logging.error(f"Error retrieving dashboard statistics from file: {e}")
         return {
             "total_analyzed": 0,
             "quantum_safe_count": 0,
             "classical_count": 0,
+            "last_updated": None,
             "data_source": "error"
         }
 
@@ -543,146 +706,122 @@ async def upload_certificate(file: UploadFile = File(...), db: Session = Depends
         except Exception as e:
             logging.warning(f"Failed to save certificate analysis statistics: {e}")
 
-        return response_data
+        return JSONResponse(content=response_data)
 
     except HTTPException:
         raise
     except Exception as e:
+        logging.error(f"Certificate processing error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error processing certificate: {str(e)}")
+        logging.error(f"Certificate processing error: {e}")
         raise HTTPException(status_code=500, detail=f"Error processing certificate: {str(e)}")
 
-@app.get("/health")
-def health_check(db: Session = Depends(get_db)):
-    db_status = "connected" if db and DATABASE_AVAILABLE else "disconnected"
-    ai_status = "enabled" if AI_AVAILABLE else "rule-based"
+@app.get("/dashboard/stats")
+def get_dashboard_stats(db: Session = Depends(get_db)):
+    """
+    Get dashboard statistics for the application
     
+    Returns statistics about analyzed certificates including quantum-safe vs classical counts
+    """
+    try:
+        stats = get_dashboard_statistics(db)
+        return JSONResponse(content={
+            "statistics": stats,
+            "status": "Statistics retrieved successfully"
+        })
+    except Exception as e:
+        logging.error(f"Error retrieving dashboard statistics: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Error retrieving statistics: {str(e)}"}
+        )
+
+@app.get("/health")
+def health_check():
+    """
+    Health check endpoint for monitoring
+    
+    Returns system status including database and AI service availability
+    """
     return {
-        "status": "healthy", 
-        "service": "QuantumCertify API - AI-Powered PQC Analysis",
-        "database": db_status,
-        "ai_recommendations": ai_status,
-        "ai_provider": "Google Gemini" if AI_AVAILABLE else "Rule-based Analysis",
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
         "version": APP_VERSION,
+        "services": {
+            "database": "available" if DATABASE_AVAILABLE else "unavailable",
+            "ai_service": "available" if AI_AVAILABLE else "unavailable",
+            "ai_provider": "Google Gemini" if AI_AVAILABLE else "Rule-based"
+        },
         "contact": CONTACT_EMAIL,
         "developer": DEVELOPER_NAME
     }
 
-@app.get("/dashboard-statistics")
-def get_dashboard_statistics_endpoint(db: Session = Depends(get_db)):
+@app.get("/algorithms/pqc")
+def get_pqc_algorithms(db: Session = Depends(get_db)):
     """
-    Get dashboard statistics for certificate analysis
-    """
-    stats = get_dashboard_statistics(db)
+    Get list of supported post-quantum cryptography algorithms
     
-    return {
-        "status": "success",
-        "statistics": {
-            "totalCertificatesAnalyzed": stats["total_analyzed"],
-            "quantumSafeCertificates": stats["quantum_safe_count"],
-            "classicalCertificates": stats["classical_count"],
-            "lastUpdated": stats.get("last_updated"),
-            "dataSource": stats["data_source"]
-        },
-        "message": "Dashboard statistics retrieved successfully"
-    }
-
-@app.get("/pqc-algorithms")
-def get_pqc_algorithms():
+    Returns information about NIST-standardized PQC algorithms and their characteristics
     """
-    Get comprehensive list of Post-Quantum Cryptography algorithms
-    """
-    return {
-        "nist_standardized": {
-            "key_exchange": [
-                {
-                    "name": "CRYSTALS-Kyber", 
-                    "security_levels": ["Kyber-512", "Kyber-768", "Kyber-1024"],
-                    "security_strength": "128/192/256-bit equivalent",
-                    "status": "NIST Standard (2022)",
-                    "type": "Lattice-based"
-                }
-            ],
-            "digital_signatures": [
-                {
-                    "name": "CRYSTALS-Dilithium", 
-                    "security_levels": ["Dilithium2", "Dilithium3", "Dilithium5"],
-                    "security_strength": "128/192/256-bit equivalent",
-                    "status": "NIST Standard (2022)",
-                    "type": "Lattice-based"
-                },
-                {
-                    "name": "FALCON", 
-                    "security_levels": ["FALCON-512", "FALCON-1024"],
-                    "security_strength": "128/256-bit equivalent",
-                    "status": "NIST Standard (2022)",
-                    "type": "Lattice-based"
-                },
-                {
-                    "name": "SPHINCS+", 
-                    "security_levels": ["Multiple parameter sets"],
-                    "security_strength": "128/192/256-bit equivalent",
-                    "status": "NIST Standard (2022)",
-                    "type": "Hash-based"
-                }
-            ]
-        },
-        "alternative_candidates": [
-            {
-                "name": "Classic McEliece", 
-                "type": "Key Exchange", 
-                "status": "NIST Alternative Candidate",
-                "security_type": "Code-based"
+    try:
+        pqc_algorithms = {
+            "nist_standardized": {
+                "key_exchange": [
+                    {
+                        "name": "CRYSTALS-Kyber",
+                        "security_levels": ["Kyber-512", "Kyber-768", "Kyber-1024"],
+                        "type": "Lattice-based",
+                        "status": "NIST Standard",
+                        "characteristics": "Fast key generation and encapsulation, moderate key sizes"
+                    }
+                ],
+                "digital_signatures": [
+                    {
+                        "name": "CRYSTALS-Dilithium",
+                        "security_levels": ["Dilithium2", "Dilithium3", "Dilithium5"],
+                        "type": "Lattice-based",
+                        "status": "NIST Standard",
+                        "characteristics": "Fast signing and verification, larger signature sizes"
+                    },
+                    {
+                        "name": "FALCON",
+                        "security_levels": ["FALCON-512", "FALCON-1024"],
+                        "type": "Lattice-based",
+                        "status": "NIST Standard",
+                        "characteristics": "Compact signatures, complex implementation"
+                    },
+                    {
+                        "name": "SPHINCS+",
+                        "security_levels": ["SPHINCS+-128s", "SPHINCS+-192s", "SPHINCS+-256s"],
+                        "type": "Hash-based",
+                        "status": "NIST Standard",
+                        "characteristics": "Conservative security assumptions, large signature sizes"
+                    }
+                ]
             },
-            {
-                "name": "BIKE", 
-                "type": "Key Exchange", 
-                "status": "NIST Alternative Candidate",
-                "security_type": "Code-based"
+            "hybrid_approaches": {
+                "description": "Combine classical and post-quantum algorithms for migration",
+                "examples": ["RSA + Kyber", "ECDSA + Dilithium", "ECDH + Kyber"]
             },
-            {
-                "name": "FrodoKEM", 
-                "type": "Key Exchange", 
-                "status": "NIST Alternative Candidate",
-                "security_type": "Lattice-based"
-            },
-            {
-                "name": "HQC", 
-                "type": "Key Exchange", 
-                "status": "NIST Alternative Candidate",
-                "security_type": "Code-based"
+            "migration_timeline": {
+                "immediate": "Begin evaluation and planning",
+                "short_term": "Implement hybrid solutions (1-2 years)",
+                "medium_term": "Full PQC migration (3-5 years)",
+                "long_term": "Complete quantum-safe infrastructure (5-10 years)"
             }
-        ],
-        "deprecated": [
-            {
-                "name": "SIKE/SIDH", 
-                "type": "Key Exchange", 
-                "status": "Broken (2022) - Not Recommended",
-                "security_type": "Isogeny-based"
-            }
-        ],
-        "migration_info": {
-            "timeline": "NIST recommends beginning migration by 2030",
-            "priority": "High-risk systems should migrate by 2025-2027",
-            "approach": "Hybrid classical+PQC implementations recommended initially"
         }
-    }
+        
+        return JSONResponse(content={
+            "pqc_algorithms": pqc_algorithms,
+            "last_updated": datetime.utcnow().isoformat(),
+            "status": "PQC algorithm information retrieved successfully"
+        })
+        
+    except Exception as e:
+        logging.error(f"Error retrieving PQC algorithms: {e}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving PQC information: {str(e)}")
 
-@app.get("/ai-analysis/{algorithm_name}")
-async def get_algorithm_analysis(algorithm_name: str):
-    """
-    Get detailed AI analysis for a specific cryptographic algorithm
-    """
-    context = {
-        "analysis_type": "standalone_algorithm",
-        "timestamp": datetime.utcnow().isoformat()
-    }
-    
-    recommendations = await _get_gemini_recommendations(
-        algorithm_name, "general", context
-    )
-    
-    return {
-        "algorithm": algorithm_name,
-        "analysis": recommendations,
-        "ai_provider": "Google Gemini" if AI_AVAILABLE else "Rule-based",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, debug=DEBUG_MODE)

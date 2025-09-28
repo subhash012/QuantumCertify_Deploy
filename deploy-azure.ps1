@@ -211,12 +211,23 @@ function Deploy-Containers {
     $acrUsername = az acr credential show --name $RegistryName --resource-group $ResourceGroup --query "username" -o tsv
     $acrPassword = az acr credential show --name $RegistryName --resource-group $ResourceGroup --query "passwords[0].value" -o tsv
     
-    # Check if GEMINI_API_KEY is set
+    # Check required environment variables
     $geminiApiKey = $env:GEMINI_API_KEY
+    $secretKey = $env:SECRET_KEY
+    $jwtSecret = $env:JWT_SECRET
+    $apiToken = $env:API_TOKEN
+    
     if (-not $geminiApiKey) {
         Write-Error "GEMINI_API_KEY environment variable is not set"
         Write-Output "Please set it before running deployment:"
         Write-Output "`$env:GEMINI_API_KEY = 'your_gemini_api_key'"
+        exit 1
+    }
+    
+    if (-not $secretKey) {
+        Write-Error "SECRET_KEY environment variable is not set"
+        Write-Output "Please set production secret key:"
+        Write-Output "`$env:SECRET_KEY = 'your_production_secret_key'"
         exit 1
     }
     
@@ -260,15 +271,22 @@ function Deploy-Containers {
             "DB_NAME=$($dbConfig.Database)" `
             "DB_USERNAME=$($dbConfig.Username)" `
             "DB_PASSWORD=$($dbConfig.Password)" `
-            "DB_PORT=1433" `
-            "DB_DRIVER=SQL+Server" `
-            "CONTACT_EMAIL=$($env:CONTACT_EMAIL)" `
-            "DEVELOPER_NAME=$($env:DEVELOPER_NAME)" `
-            "PROJECT_VERSION=2.0.0" `
-            "SECRET_KEY=$($env:SECRET_KEY)" `
+            "SECRET_KEY=$secretKey" `
+            "JWT_SECRET=$jwtSecret" `
+            "API_TOKEN=$apiToken" `
         --environment-variables `
-            "ALLOWED_ORIGINS=http://$DnsNameLabel.eastus.azurecontainer.io,https://$DnsNameLabel.eastus.azurecontainer.io" `
+            "DB_PORT=1433" `
+            "DB_DRIVER=ODBC Driver 17 for SQL Server" `
+            "CONTACT_EMAIL=subhashsubu106@gmail.com" `
+            "DEVELOPER_NAME=Subhash" `
+            "PROJECT_VERSION=2.0.0" `
+            "ENVIRONMENT=production" `
+            "ALLOWED_ORIGINS=https://quantumcertify.com,https://www.quantumcertify.com,https://api.quantumcertify.com" `
+            "SSL_ENABLED=true" `
+            "FORCE_HTTPS=true" `
+            "SECURE_COOKIES=true" `
             "LOG_LEVEL=INFO" `
+            "DEBUG=false" `
         --output table
     
     if ($LASTEXITCODE -ne 0) {

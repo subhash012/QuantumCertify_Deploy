@@ -1,0 +1,17 @@
+[providers]
+python = "3.11"
+
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.11"
+
+[phases.setup]
+nixPkgs = ["python311", "python311Packages.pip"]
+
+[phases.install]
+cmd = "cd backend && pip install -r requirements.txt"
+
+[phases.build]
+cmd = "echo Build phase completed"
+
+[start]
+cmd = "cd backend && python run_server.py"

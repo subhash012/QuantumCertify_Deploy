@@ -1,20 +1,27 @@
 import axios from 'axios';
 
 // Base API configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+// In development, use proxy (empty baseURL), in production use full URL
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? (process.env.REACT_APP_API_URL || 'https://api.quantumcertify.tech')
+  : ''; // Use proxy in development
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000, // 30 seconds timeout
+  withCredentials: true, // Include cookies for authentication
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
 
 // Request interceptor for logging
 apiClient.interceptors.request.use(
   (config) => {
-    console.log(`Making ${config.method?.toUpperCase()} request to: ${config.url}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${config.url}`);
+    }
     return config;
   },
   (error) => {
@@ -64,14 +71,11 @@ export const apiService = {
     });
   },
   
-  // Get public key algorithms (if implemented)
-  getPublicKeyAlgorithms: () => apiClient.get('/public-key-algorithms'),
-  
-  // Get signature algorithms (if implemented)
-  getSignatureAlgorithms: () => apiClient.get('/signature-algorithms'),
+  // Get PQC algorithms
+  getPQCAlgorithms: () => apiClient.get('/algorithms/pqc'),
   
   // Get dashboard statistics
-  getDashboardStatistics: () => apiClient.get('/dashboard-statistics'),
+  getDashboardStatistics: () => apiClient.get('/dashboard/stats'),
 };
 
 export default apiService;

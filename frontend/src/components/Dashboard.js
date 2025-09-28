@@ -45,12 +45,14 @@ const Dashboard = () => {
       const response = await apiService.getDashboardStatistics();
       
       if (response.data && response.data.statistics) {
+        const stats = response.data.statistics;
+        
         setStats({
-          totalCertificatesAnalyzed: response.data.statistics.totalCertificatesAnalyzed || 0,
-          quantumSafeCertificates: response.data.statistics.quantumSafeCertificates || 0,
-          classicalCertificates: response.data.statistics.classicalCertificates || 0,
-          lastUpdated: response.data.statistics.lastUpdated,
-          dataSource: response.data.statistics.dataSource || 'api'
+          totalCertificatesAnalyzed: stats.total_analyzed || 0,
+          quantumSafeCertificates: stats.quantum_safe_count || 0,
+          classicalCertificates: stats.classical_count || 0,
+          lastUpdated: stats.last_updated,
+          dataSource: stats.data_source || 'api'
         });
       }
     } catch (error) {
@@ -95,8 +97,9 @@ const Dashboard = () => {
             {apiStatus.data && (
               <div className="api-details">
                 <small>
-                  Service: {apiStatus.data.service} | 
-                  Database: {apiStatus.data.database || 'Not connected'}
+                  Version: {apiStatus.data.version} | 
+                  Database: {apiStatus.data.services?.database || 'Not connected'} | 
+                  AI Service: {apiStatus.data.services?.ai_service || 'Not available'}
                 </small>
               </div>
             )}
@@ -107,23 +110,6 @@ const Dashboard = () => {
       <div className="stats-section">
         <div className="stats-header">
           <h2>📈 Certificate Analysis Statistics</h2>
-          <div className="stats-controls">
-            {/* <button 
-              onClick={fetchDashboardStats} 
-              disabled={statsLoading}
-              className="refresh-btn"
-            >
-              {statsLoading ? '🔄' : '↻'} Refresh
-            </button> */}
-            {stats.lastUpdated && (
-              <small className="last-updated">
-                Last updated: {new Date(stats.lastUpdated).toLocaleString()}
-              </small>
-            )}
-            {/* <small className="data-source">
-              Source: {stats.dataSource === 'database' ? 'Database' : stats.dataSource === 'fallback' ? 'Local Storage' : 'Loading...'}
-            </small> */}
-          </div>
         </div>
         <div className="stats-grid">
           <div className="stat-card">

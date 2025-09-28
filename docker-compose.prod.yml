@@ -14,14 +14,22 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_PORT=${DB_PORT:-1433}
-      - DB_DRIVER=${DB_DRIVER:-SQL+Server}
+      - DB_DRIVER=${DB_DRIVER:-ODBC Driver 17 for SQL Server}
       - CONTACT_EMAIL=${CONTACT_EMAIL}
       - DEVELOPER_NAME=${DEVELOPER_NAME}
       - PROJECT_VERSION=${PROJECT_VERSION}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
       - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_TOKEN=${API_TOKEN}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
       - DEBUG=${DEBUG:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_WORKERS=${MAX_WORKERS:-4}
+      - TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-300}
+      - SSL_ENABLED=${SSL_ENABLED:-true}
+      - FORCE_HTTPS=${FORCE_HTTPS:-true}
+      - SECURE_COOKIES=${SECURE_COOKIES:-true}
     networks:
       - quantumcertify-network
     restart: unless-stopped
