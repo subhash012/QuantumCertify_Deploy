@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiService } from '../services/api';
 import './CertificateUpload.css';
 
 const CertificateUpload = () => {
@@ -26,24 +27,11 @@ const CertificateUpload = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/upload-certificate', {
-        method: 'POST',
-        body: (() => {
-          const formData = new FormData();
-          formData.append('file', file);
-          return formData;
-        })()
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Upload failed');
-      }
-
-      const data = await response.json();
-      console.log('Certificate analysis result:', data);
-      setResult(data);
+      const response = await apiService.uploadCertificate(file);
+      console.log('Certificate analysis result:', response.data);
+      setResult(response.data);
     } catch (err) {
+      console.error('Upload error:', err);
       setError(err.message || 'An error occurred while processing the certificate');
     } finally {
       setLoading(false);
