@@ -3,7 +3,7 @@ import axios from 'axios';
 // Base API configuration
 // In development, use proxy (empty baseURL), in production use full URL
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? (process.env.REACT_APP_API_URL || 'https://api.quantumcertify.tech')
+  ? (process.env.REACT_APP_API_URL || 'https://web-production-bf0b7.up.railway.app')
   : ''; // Use proxy in development
 
 const apiClient = axios.create({

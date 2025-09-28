@@ -1,0 +1,24 @@
+# Frontend nixpacks.toml for Railway deployment
+providers = ['node']
+
+[variables]
+NODE_VERSION = '18'
+
+[phases.setup]
+nixPkgs = ['nodejs_18', 'npm']
+
+[phases.install]
+cmd = 'npm ci --production=false'
+
+[phases.build] 
+cmd = '''
+# Set the API URL for production
+export REACT_APP_API_URL=https://web-production-bf0b7.up.railway.app
+export REACT_APP_API_BASE_URL=https://web-production-bf0b7.up.railway.app
+
+# Build the React application
+npm run build
+'''
+
+[start]
+cmd = 'npx serve -s build -l 3000'
