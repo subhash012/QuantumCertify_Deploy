@@ -14,8 +14,8 @@ cmds = [
     "sudo apt-get update",
     "sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18",
     # Install Python requirements (using python3 -m pip for compatibility)
-    "python3 -m pip install --upgrade pip",
-    "cd backend && python3 -m pip install -r requirements.txt"
+    "python3 -m pip install --upgrade pip --break-system-packages",
+    "cd backend && python3 -m pip install -r requirements.txt --break-system-packages"
 ]
 
 [phases.build]

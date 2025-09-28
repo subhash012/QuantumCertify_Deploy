@@ -134,3 +134,17 @@ If issues persist, check Railway logs for:
 - FastAPI app initialization messages
 
 The startup test script provides detailed diagnostics for each component and will help identify exactly what's failing.
+
+## 8th Deployment Attempt - Externally-Managed-Environment Fix
+
+**Issue**: Python 3.12 externally-managed-environment error preventing pip package installation. Build failing with "externally-managed-environment" error when running `python3 -m pip install --upgrade pip`.
+
+**Root Cause**: Python 3.12 introduced PEP 668 security feature that prevents system-wide package installation to protect the Python environment. Railway environment triggers this protection.
+
+**Solution**: Add `--break-system-packages` flag to all pip commands to override the externally-managed-environment restriction in the controlled Railway deployment environment.
+
+**Changes Made**:
+- Updated pip upgrade command: `"python3 -m pip install --upgrade pip --break-system-packages"`
+- Updated requirements installation: `"cd backend && python3 -m pip install -r requirements.txt --break-system-packages"`
+
+**Expected Outcome**: Pip should successfully install packages despite Python 3.12 environment protection, completing the deployment process successfully.
