@@ -116,17 +116,19 @@ Railway needs specific configuration files to deploy your application properly.
 3. **Create nixpacks.toml** (Build configuration):
    ```powershell
    @"
-   [providers]
-   python = "3.11"
+   providers = ['python']
    
    [variables]
-   NIXPACKS_PYTHON_VERSION = "3.11"
+   NIXPACKS_PYTHON_VERSION = '3.11'
    
    [phases.setup]
-   nixPkgs = ['python311', 'python311Packages.pip', 'curl', 'gnupg2']
+   nixPkgs = ['python311', 'python311Packages.pip', 'curl', 'gnupg2', 'apt']
    
    [phases.install]
    cmd = '''
+   # Update package list
+   apt-get update
+   
    # Install Microsoft ODBC Driver 18 for SQL Server on Railway's Linux
    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
    curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | tee /etc/apt/sources.list.d/mssql-release.list
