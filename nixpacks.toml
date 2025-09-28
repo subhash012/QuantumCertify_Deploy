@@ -8,30 +8,26 @@ nixPkgs = ['python311', 'python311Packages.pip', 'curl', 'gnupg']
 aptPkgs = ['unixodbc-dev']
 
 [phases.install]
-cmd = '''
-# Install Microsoft ODBC Driver 18 for SQL Server
-curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-echo "deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/mssql-release.list
-sudo apt-get update
-sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
-
-# Verify ODBC driver installation
-odbcinst -j
-odbcinst -q -d
-
-# Install Python requirements
-cd backend && pip install -r requirements.txt
-
-# Add FastAPI test client for startup testing
-pip install httpx
-'''
+cmds = [
+    # Install Microsoft ODBC Driver 18 for SQL Server
+    "curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg",
+    "echo 'deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main' | sudo tee /etc/apt/sources.list.d/mssql-release.list",
+    "sudo apt-get update",
+    "sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18",
+    # Verify ODBC driver installation
+    "odbcinst -j",
+    "odbcinst -q -d",
+    # Install Python requirements
+    "pip install --upgrade pip",
+    "cd backend && pip install -r requirements.txt"
+]
 
 [phases.build]
-cmd = '''
-echo "=== QuantumCertify Build Phase ==="
-cd backend && python startup_test.py || echo "Startup test completed with some warnings - continuing deployment"
-echo "=== Build phase completed ==="
-'''
+cmds = [
+    "echo '=== QuantumCertify Build Phase ==='",
+    "cd backend && python startup_test.py || echo 'Startup test completed with some warnings - continuing deployment'",
+    "echo '=== Build phase completed ==='"
+]
 
 [start]
 cmd = 'cd backend && python run_server.py'

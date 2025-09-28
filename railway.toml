@@ -9,4 +9,4 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 [environments.production]
-variables = { NODE_ENV = "production" }
+variables = { ENVIRONMENT = "production", RAILWAY_ENVIRONMENT = "production" }

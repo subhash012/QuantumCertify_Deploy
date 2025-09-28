@@ -1,11 +1,12 @@
-# QuantumCertify Railway Deployment - Healthcheck Fix
+# QuantumCertify Railway Deployment - Critical Fixes Applied
 
 ## Issues Identified from Logs
 
 From the Railway deployment logs, the build was successful but the application failed healthcheck because:
 
 1. **ODBC Driver Version Mismatch**: The application expected "ODBC Driver 17 for SQL Server" but Railway installed "ODBC Driver 18 for SQL Server"
-2. **Potential startup errors**: The app wasn't responding to the `/health` endpoint after 5+ minutes of attempts
+2. **Python Package Installation Failure**: The critical issue - `ModuleNotFoundError: No module named 'uvicorn'` indicates that Python packages from `requirements.txt` weren't installed
+3. **nixpacks Configuration Error**: Using single `cmd` instead of `cmds` array prevented proper package installation
 
 ## Fixes Applied
 
@@ -25,15 +26,28 @@ From the Railway deployment logs, the build was successful but the application f
 - Tests environment variables, imports, database connection, FastAPI app creation
 - Helps identify issues before deployment completes
 
-### 3. Improved Build Configuration
+### 3. **CRITICAL FIX**: Corrected nixpacks Configuration  
 **File**: `nixpacks.toml`
 ```toml
-[phases.build]
+# BEFORE (incorrect - single cmd):
+[phases.install]
 cmd = '''
-echo "=== QuantumCertify Build Phase ==="
-cd backend && python startup_test.py || echo "Startup test completed with some warnings - continuing deployment"
-echo "=== Build phase completed ==="
+# Commands here weren't executing properly
 '''
+
+# AFTER (correct - cmds array):
+[phases.install]
+cmds = [
+    "pip install --upgrade pip",
+    "cd backend && pip install -r requirements.txt"
+]
+
+[phases.build]
+cmds = [
+    "echo '=== QuantumCertify Build Phase ==='",
+    "cd backend && python startup_test.py || echo 'Startup test completed'",
+    "echo '=== Build phase completed ==='"
+]
 ```
 
 ### 4. Enhanced Server Startup Logging
@@ -51,13 +65,15 @@ httpx==0.27.2  # For FastAPI TestClient testing
 
 ## Expected Results
 
-After redeployment:
+After redeployment with these critical fixes:
 
-1. ✅ **ODBC Driver**: Application will use correct "ODBC Driver 18 for SQL Server"
-2. ✅ **Startup Testing**: Build logs will show detailed test results for each component
-3. ✅ **Better Diagnostics**: More informative error messages if issues occur
-4. ✅ **Health Endpoint**: Should respond correctly at `/health`
-5. ✅ **Database Connection**: Should connect to Azure SQL Server successfully
+1. ✅ **Python Package Installation**: `pip install -r requirements.txt` will execute properly
+2. ✅ **All Dependencies Available**: uvicorn, fastapi, pyodbc, and all required packages will be installed
+3. ✅ **ODBC Driver**: Application will use correct "ODBC Driver 18 for SQL Server"
+4. ✅ **Startup Testing**: Build logs will show detailed test results for each component  
+5. ✅ **Server Startup**: Python server will start without import errors
+6. ✅ **Health Endpoint**: Will respond correctly at `/health`
+7. ✅ **Database Connection**: Should connect to Azure SQL Server successfully
 
 ## How to Redeploy
 
