@@ -9,9 +9,12 @@
 - **Python Package Installation Failure**: `ModuleNotFoundError: No module named 'uvicorn'`
 - **nixpacks Configuration Error**: Using single `cmd` instead of `cmds` array prevented package installation
 
-### Issue #3 (Current Deployment)
+### Issue #3 (Third Deployment)
 - **GPG Command Not Available**: `sudo: gpg: command not found` during Microsoft ODBC driver installation
-- **Build Process Timing**: `gpg` command unavailable before nix packages are properly installed
+- **apt-key Dependency**: `apt-key` command requires gnupg packages not available in Railway environment
+
+### Issue #4 (Fourth Deployment - Current)
+- **Modern GPG Approach**: Switching to modern keyring approach that doesn't require `apt-key` command
 
 ## Fixes Applied
 
@@ -34,12 +37,12 @@
 ### 3. **CRITICAL FIX**: Corrected nixpacks Configuration and ODBC Installation
 **File**: `nixpacks.toml`
 ```toml
-# FINAL WORKING VERSION:
+# LATEST VERSION (4th deployment attempt):
 [phases.install]
 cmds = [
-    # Microsoft ODBC Driver (simplified approach)
-    "curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -",
-    "echo 'deb [arch=amd64,arm64,armhf] https://packages.microsoft.com/ubuntu/22.04/prod jammy main' | sudo tee /etc/apt/sources.list.d/mssql-release.list",
+    # Microsoft ODBC Driver (modern GPG keyring approach)
+    "curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg",
+    "echo 'deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main' | sudo tee /etc/apt/sources.list.d/mssql-release.list",
     "sudo apt-get update", 
     "sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18",
     # Python packages
@@ -57,10 +60,11 @@ cmds = [
 ```
 
 **Key Changes Made:**
-- ✅ Fixed nixpacks syntax: `cmd` → `cmds` array
-- ✅ Replaced `gpg --dearmor` with `apt-key add` (more reliable)
-- ✅ Simplified ODBC driver installation process
+- ✅ Fixed nixpacks syntax: `cmd` → `cmds` array  
+- ✅ Switched to modern GPG keyring approach (no apt-key dependency)
+- ✅ Uses `signed-by` directive in repository configuration
 - ✅ Added ODBC verification in build phase (non-blocking)
+- ✅ Proper GPG key installation without deprecated commands
 
 ### 4. Enhanced Server Startup Logging
 **File**: `backend/run_server.py`
