@@ -43,12 +43,16 @@ else:
         odbc_str,
         pool_pre_ping=True,  # Enable connection health checks
         pool_recycle=3600,   # Recycle connections every hour
+        pool_timeout=30,     # Wait up to 30 seconds for a connection from the pool
         echo=os.getenv('DEBUG', 'false').lower() == 'true',  # Log SQL queries in debug mode
         # SQL Server specific configurations - Railway has ODBC Driver 18
         connect_args={
             "driver": DB_DRIVER,  # Use environment variable (ODBC Driver 18 for SQL Server)
             "TrustServerCertificate": "no",
-            "Encrypt": "yes"
+            "Encrypt": "yes",
+            "Connection Timeout": "60",  # 60 seconds connection timeout
+            "Command Timeout": "60",     # 60 seconds command timeout
+            "Login Timeout": "60"        # 60 seconds login timeout
         }
     )
 
