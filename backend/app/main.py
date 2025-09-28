@@ -281,7 +281,18 @@ if ENVIRONMENT == "production":
         app.add_middleware(HTTPSRedirectMiddleware)
     
     # Trusted host middleware for production domains
-    TRUSTED_HOSTS = ["quantumcertify.tech", "www.quantumcertify.tech", "api.quantumcertify.tech"]
+    # Include Railway.app domains and localhost for health checks
+    TRUSTED_HOSTS = [
+        "quantumcertify.tech", 
+        "www.quantumcertify.tech", 
+        "api.quantumcertify.tech",
+        "web-production-bf0b7.up.railway.app",  # Your specific Railway domain
+        "*.railway.app",  # Railway.app domains
+        "*.up.railway.app",  # Railway.app internal domains
+        "testserver",  # For testing
+        "localhost",  # For local health checks
+        "127.0.0.1"   # For IP-based health checks
+    ]
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=TRUSTED_HOSTS
