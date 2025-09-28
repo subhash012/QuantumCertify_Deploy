@@ -276,9 +276,10 @@ app = FastAPI(
 
 # Production Security Middleware
 if ENVIRONMENT == "production":
-    # Force HTTPS in production
-    if FORCE_HTTPS:
-        app.add_middleware(HTTPSRedirectMiddleware)
+    # Note: Railway handles HTTPS at the edge, so we don't need HTTPSRedirectMiddleware
+    # This prevents healthcheck 307 redirects that cause deployment failures
+    # if FORCE_HTTPS:
+    #     app.add_middleware(HTTPSRedirectMiddleware)
     
     # Trusted host middleware for production domains
     # Include Railway.app domains and localhost for health checks
