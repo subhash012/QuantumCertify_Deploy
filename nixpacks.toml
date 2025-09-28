@@ -1,16 +1,3 @@
-providers[phases.install]
-cmds = [
-    # Install Microsoft ODBC Driver 18 for SQL Server (ensure gnupg available first)
-    "sudo apt-get update && sudo apt-get install -y gnupg",
-    "curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg",
-    "echo 'deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main' | sudo tee /etc/apt/sources.list.d/mssql-release.list",
-    "sudo apt-get update",
-    "sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18",
-    # Install Python requirements
-    "pip install --upgrade pip",
-    "cd backend && pip install -r requirements.txt"
-]']
-
 [variables]
 NIXPACKS_PYTHON_VERSION = '3.11'
 
@@ -20,7 +7,8 @@ aptPkgs = ["unixodbc-dev", "gnupg"]
 
 [phases.install]
 cmds = [
-    # Install Microsoft ODBC Driver 18 for SQL Server (modern GPG key setup)
+    # Install Microsoft ODBC Driver 18 for SQL Server (ensure gnupg available first)
+    "sudo apt-get update && sudo apt-get install -y gnupg",
     "curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg",
     "echo 'deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main' | sudo tee /etc/apt/sources.list.d/mssql-release.list",
     "sudo apt-get update",
