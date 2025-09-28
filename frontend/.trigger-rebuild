@@ -1,0 +1,4 @@
+# Trigger rebuild
+# This file forces Railway to rebuild the frontend service
+timestamp: 2025-09-28T17:26:45Z
+reason: Fix API URL configuration in nixpacks.toml
