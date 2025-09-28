@@ -5,18 +5,15 @@ providers = ['node']
 NODE_VERSION = '20'
 
 [phases.setup]
-nixPkgs = ['nodejs_20', 'npm']
+nixPkgs = ['nodejs_20']
 
 [phases.install]
-cmd = 'npm install'
+cmd = 'npm ci'
 
 [phases.build] 
 cmd = '''
-# Set the API URL for production
 export REACT_APP_API_URL=https://web-production-bf0b7.up.railway.app
 export REACT_APP_API_BASE_URL=https://web-production-bf0b7.up.railway.app
-
-# Build the React application
 npm run build
 '''
 

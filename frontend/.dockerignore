@@ -11,3 +11,7 @@ Dockerfile
 Dockerfile.backup
 .DS_Store
 *.log
+# Ignore parent directories to focus only on frontend
+../backend/
+../DEPLOYMENT.md
+../README.md
