@@ -148,3 +148,17 @@ The startup test script provides detailed diagnostics for each component and wil
 - Updated requirements installation: `"cd backend && python3 -m pip install -r requirements.txt --break-system-packages"`
 
 **Expected Outcome**: Pip should successfully install packages despite Python 3.12 environment protection, completing the deployment process successfully.
+
+## 9th Deployment Attempt - System Pip Upgrade Conflict Fix
+
+**Issue**: Pip upgrade failing with "Cannot uninstall pip 24.0, RECORD file not found. Hint: The package was installed by debian." error when trying to upgrade system-managed pip.
+
+**Root Cause**: Railway environment has system-managed pip installed via apt, which cannot be upgraded using pip itself due to missing RECORD file. This is a protection mechanism for system packages.
+
+**Solution**: Remove the pip upgrade step entirely since the system-installed pip is sufficient for installing our requirements. Focus on just installing the application dependencies.
+
+**Changes Made**:
+- Removed problematic pip upgrade command: `"python3 -m pip install --upgrade pip --break-system-packages"`
+- Kept only requirements installation: `"cd backend && python3 -m pip install -r requirements.txt --break-system-packages"`
+
+**Expected Outcome**: System pip (24.0) should be sufficient to install all Python requirements without upgrade conflicts, allowing successful deployment.
