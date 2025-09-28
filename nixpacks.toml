@@ -13,9 +13,9 @@ cmds = [
     "echo 'deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main' | sudo tee /etc/apt/sources.list.d/mssql-release.list",
     "sudo apt-get update",
     "sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18",
-    # Install Python requirements
-    "pip install --upgrade pip",
-    "cd backend && pip install -r requirements.txt"
+    # Install Python requirements (using python3 -m pip for compatibility)
+    "python3 -m pip install --upgrade pip",
+    "cd backend && python3 -m pip install -r requirements.txt"
 ]
 
 [phases.build]
