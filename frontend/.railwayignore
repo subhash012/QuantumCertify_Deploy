@@ -1,0 +1,12 @@
+# Railway ignore file for frontend deployment
+node_modules/
+.git/
+.env.local
+.env.development
+.env.test
+Dockerfile.backup
+nginx.conf
+*.log
+.DS_Store
+src/**/*.test.js
+src/**/*.spec.js

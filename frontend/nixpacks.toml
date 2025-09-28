@@ -2,13 +2,13 @@
 providers = ['node']
 
 [variables]
-NODE_VERSION = '18'
+NODE_VERSION = '20'
 
 [phases.setup]
-nixPkgs = ['nodejs_18', 'npm']
+nixPkgs = ['nodejs_20', 'npm']
 
 [phases.install]
-cmd = 'npm ci --production=false'
+cmd = 'npm install'
 
 [phases.build] 
 cmd = '''
@@ -21,4 +21,4 @@ npm run build
 '''
 
 [start]
-cmd = 'npx serve -s build -l 3000'
+cmd = 'npx serve -s build -l $PORT'
