@@ -112,6 +112,10 @@ const Dashboard = () => {
           <h2>📈 Certificate Analysis Statistics</h2>
         </div>
         <div className="stats-grid">
+          {statsLoading ? (
+            <div className="loading-stats">Loading statistics...</div>
+          ) : (
+            <>
           <div className="stat-card">
             <div className="stat-icon">📊</div>
             <div className="stat-content">
@@ -135,6 +139,8 @@ const Dashboard = () => {
               <p>Classical Only</p>
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
 

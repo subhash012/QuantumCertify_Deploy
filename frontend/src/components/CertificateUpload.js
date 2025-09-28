@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { apiService } from '../services/api';
 import './CertificateUpload.css';
 
 const CertificateUpload = () => {
