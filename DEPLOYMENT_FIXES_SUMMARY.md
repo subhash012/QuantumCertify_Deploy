@@ -13,8 +13,12 @@
 - **GPG Command Not Available**: `sudo: gpg: command not found` during Microsoft ODBC driver installation
 - **apt-key Dependency**: `apt-key` command requires gnupg packages not available in Railway environment
 
-### Issue #4 (Fourth Deployment - Current)
-- **Modern GPG Approach**: Switching to modern keyring approach that doesn't require `apt-key` command
+### Issue #4 (Fourth Deployment)
+- **GPG Not Available**: `sudo: gpg: command not found` even with gnupg in nixpkgs setup
+- **Timing Issue**: GPG command needed before nix environment is fully configured
+
+### Issue #5 (Fifth Deployment - Current) 
+- **Explicit GPG Installation**: Installing gnupg via apt-get before using GPG commands
 
 ## Fixes Applied
 
@@ -37,10 +41,11 @@
 ### 3. **CRITICAL FIX**: Corrected nixpacks Configuration and ODBC Installation
 **File**: `nixpacks.toml`
 ```toml
-# LATEST VERSION (4th deployment attempt):
+# LATEST VERSION (5th deployment attempt):
 [phases.install]
 cmds = [
-    # Microsoft ODBC Driver (modern GPG keyring approach)
+    # Microsoft ODBC Driver (explicit gnupg installation first)
+    "sudo apt-get update && sudo apt-get install -y gnupg",
     "curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg",
     "echo 'deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main' | sudo tee /etc/apt/sources.list.d/mssql-release.list",
     "sudo apt-get update", 
@@ -61,10 +66,10 @@ cmds = [
 
 **Key Changes Made:**
 - ✅ Fixed nixpacks syntax: `cmd` → `cmds` array  
-- ✅ Switched to modern GPG keyring approach (no apt-key dependency)
-- ✅ Uses `signed-by` directive in repository configuration
+- ✅ Explicit `gnupg` installation via apt-get before GPG operations
+- ✅ Modern GPG keyring approach with `signed-by` directive
 - ✅ Added ODBC verification in build phase (non-blocking)
-- ✅ Proper GPG key installation without deprecated commands
+- ✅ Proper timing: install gnupg first, then use GPG commands
 
 ### 4. Enhanced Server Startup Logging
 **File**: `backend/run_server.py`
