@@ -20,9 +20,13 @@
 ### Issue #5 (Fifth Deployment)
 - **Explicit GPG Installation**: Installing gnupg via apt-get before using GPG commands
 
-### Issue #6 (Sixth Deployment - Current)
+### Issue #6 (Sixth Deployment)
 - **Pip Command Not Available**: `/bin/bash: line 1: pip: command not found` after successful ODBC driver installation
 - **PATH Issue**: pip from nixpkgs not available in standard PATH during install phase
+
+### Issue #7 (Seventh Deployment - Current)
+- **Python3 Command Not Available**: `/bin/bash: line 1: python3: command not found` even with nixpkgs python311
+- **Environment Issue**: nixpkgs Python not available during install phase, need apt-based installation
 
 ## Fixes Applied
 
@@ -45,11 +49,11 @@
 ### 3. **CRITICAL FIX**: Corrected nixpacks Configuration and ODBC Installation
 **File**: `nixpacks.toml`
 ```toml
-# LATEST VERSION (6th deployment attempt):
+# LATEST VERSION (7th deployment attempt):
 [phases.install]
 cmds = [
-    # Microsoft ODBC Driver (explicit gnupg installation first)
-    "sudo apt-get update && sudo apt-get install -y gnupg",
+    # Microsoft ODBC Driver (ensure gnupg and python available first)
+    "sudo apt-get update && sudo apt-get install -y gnupg python3 python3-pip",
     "curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg",
     "echo 'deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main' | sudo tee /etc/apt/sources.list.d/mssql-release.list",
     "sudo apt-get update", 
@@ -73,7 +77,8 @@ cmds = [
 - ✅ Explicit `gnupg` installation via apt-get before GPG operations
 - ✅ Modern GPG keyring approach with `signed-by` directive
 - ✅ Microsoft ODBC Driver 18 successfully installed
-- ✅ Fixed pip PATH issue: `pip` → `python3 -m pip` for compatibility
+- ✅ Added apt-based Python installation: `python3` and `python3-pip`
+- ✅ Comprehensive setup: nixpkgs + apt packages for full compatibility
 
 ### 4. Enhanced Server Startup Logging
 **File**: `backend/run_server.py`
