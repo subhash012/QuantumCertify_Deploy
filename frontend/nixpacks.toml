@@ -18,4 +18,4 @@ npm run build
 '''
 
 [start]
-cmd = 'npx serve -s build -l $PORT'
+cmd = 'npx serve -c serve.json -l $PORT'
