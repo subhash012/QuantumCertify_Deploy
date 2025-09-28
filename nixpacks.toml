@@ -21,9 +21,9 @@ cmds = [
 cmds = [
     "echo '=== QuantumCertify Build Phase ==='",
     "odbcinst -q -d || echo 'ODBC driver check failed but continuing'",
-    "cd backend && python startup_test.py || echo 'Startup test completed - continuing deployment'",
+    "cd backend && python3 startup_test.py || echo 'Startup test completed - continuing deployment'",
     "echo '=== Build phase completed ==='"
 ]
 
 [start]
-cmd = 'cd backend && python run_server.py'
+cmd = 'cd backend && python3 run_server.py'

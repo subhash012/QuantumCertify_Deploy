@@ -149,6 +149,20 @@ The startup test script provides detailed diagnostics for each component and wil
 
 **Expected Outcome**: Pip should successfully install packages despite Python 3.12 environment protection, completing the deployment process successfully.
 
+## 9th Deployment Attempt - Start Command Python Reference Fix
+
+**Issue**: Application container failing to start with "python: command not found" error during startup, causing healthcheck failures.
+
+**Root Cause**: The start command in nixpacks.toml still uses `python` instead of `python3`, but only `python3` is available in the Railway container environment.
+
+**Solution**: Update both start and build commands to use `python3` consistently throughout the configuration.
+
+**Changes Made**:
+- Updated start command: `cmd = 'cd backend && python3 run_server.py'`
+- Updated build test command: `"cd backend && python3 startup_test.py || echo 'Startup test completed - continuing deployment'"`
+
+**Expected Outcome**: Application should start successfully, respond to healthcheck requests, and complete deployment without service unavailable errors.
+
 ## 9th Deployment Attempt - System Pip Upgrade Conflict Fix
 
 **Issue**: Pip upgrade failing with "Cannot uninstall pip 24.0, RECORD file not found. Hint: The package was installed by debian." error when trying to upgrade system-managed pip.
