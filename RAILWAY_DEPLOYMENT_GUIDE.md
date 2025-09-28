@@ -595,6 +595,22 @@ You can watch this in real-time in the Railway dashboard. The build takes 2-3 mi
 
 ## 🌐 **PART 5: Add Custom Domain (quantumcertify.tech)**
 
+### **🔐 How Railway Authenticates Domain Ownership**
+
+Railway uses **DNS verification** to prove you own `quantumcertify.tech`:
+
+1. **You add your domain** to Railway dashboard
+2. **Railway generates a unique CNAME record** (like `abc123-xyz789.up.railway.app`)
+3. **You add this CNAME to your DNS** (proves you control the domain)
+4. **Railway verifies the DNS change** (confirms ownership)
+5. **SSL certificate is automatically issued** (secure HTTPS)
+
+**🛡️ Security**: Only the domain owner can modify DNS records, so this proves authentic ownership.
+
+### **📋 How to Add CNAME Records (Step-by-Step)**
+
+The process varies by domain registrar. Here's how to add CNAME records for popular providers:
+
 ### **Step 5.1: Add Domain in Railway**
 
 1. **In Railway Dashboard**, go to your **main service**
@@ -609,38 +625,180 @@ You can watch this in real-time in the Railway dashboard. The build takes 2-3 mi
 
 6. **Click "Add"**
 
-Railway will show you the CNAME record you need to add.
-
-### **Step 5.2: Configure DNS Records**
-
-1. **Go to your domain registrar** (.TECH domain control panel)
-
-2. **Add these DNS records**:
-
-   ```dns
-   Type: CNAME
-   Name: @  
-   Value: [railway-provided-domain].up.railway.app
-   TTL: 300
-
-   Type: CNAME  
-   Name: www
-   Value: [railway-provided-domain].up.railway.app
-   TTL: 300
-
-   Type: CNAME
-   Name: api
-   Value: [railway-provided-domain].up.railway.app  
-   TTL: 300
+7. **Railway will show you a unique CNAME record** like:
    ```
+   Target: your-unique-app-abc123.up.railway.app
+   ```
+   
+   **📋 Copy this exact value** - you'll need it for DNS configuration!
 
-3. **Save the DNS records**
+### **Step 5.2: Configure DNS Records (Domain Ownership Proof)**
 
-### **Step 5.3: Add Additional Domains**
+#### **🔍 Find Your Domain Registrar**
 
-Repeat the process for:
-- `www.quantumcertify.tech`
-- `api.quantumcertify.tech`
+First, identify where you bought `quantumcertify.tech`:
+- Check your email for domain purchase receipt
+- Go to the .TECH registrar website where you created account
+- Common .TECH registrars: Namecheap, GoDaddy, Porkbun, Name.com, 101domain
+
+#### **📝 Add CNAME Records by Registrar**
+
+**🌟 NAMECHEAP (.tech domains)**
+1. **Login to Namecheap** → Dashboard
+2. **Click "Manage"** next to quantumcertify.tech
+3. **Go to "Advanced DNS" tab**
+4. **Click "Add New Record"**
+5. **Select "CNAME Record"**
+6. **Fill in**:
+   - Host: `@` (for root domain)
+   - Value: `your-railway-app.up.railway.app`
+   - TTL: `Automatic`
+7. **Click "Save All Changes"**
+
+**🌟 GODADDY**
+1. **Login to GoDaddy** → My Products
+2. **Click "DNS"** next to quantumcertify.tech
+3. **Scroll to "Records" section**
+4. **Click "Add"** button
+5. **Select "CNAME"** from dropdown
+6. **Fill in**:
+   - Name: `@`
+   - Value: `your-railway-app.up.railway.app`
+   - TTL: `1 Hour`
+7. **Click "Save"**
+
+**🌟 PORKBUN**
+1. **Login to Porkbun** → Domain Management
+2. **Click "Details"** for quantumcertify.tech
+3. **Go to "DNS Records" section**
+4. **Click "Edit"** or "Add"**
+5. **Select "CNAME"**
+6. **Fill in**:
+   - Subdomain: `@`
+   - Answer: `your-railway-app.up.railway.app`
+   - TTL: `600`
+7. **Click "Submit"**
+
+**🌟 NAME.COM**
+1. **Login to Name.com** → Domain Manager
+2. **Click quantumcertify.tech**
+3. **Click "DNS Records" tab**
+4. **Click "Add Record"**
+5. **Select "CNAME"**
+6. **Fill in**:
+   - Host: `@`
+   - Answer: `your-railway-app.up.railway.app`
+   - TTL: `300`
+7. **Click "Add Record"**
+
+**🌟 CLOUDFLARE (if using)**
+1. **Login to Cloudflare** → Select quantumcertify.tech
+2. **Go to "DNS" tab**
+3. **Click "Add record"**
+4. **Select "CNAME"**
+5. **Fill in**:
+   - Name: `@`
+   - Target: `your-railway-app.up.railway.app`
+   - Proxy status: **🔴 DNS only** (not proxied)
+   - TTL: `Auto`
+6. **Click "Save"**
+
+**⚠️ CRITICAL**: Replace `your-railway-app.up.railway.app` with the exact CNAME target Railway gives you!
+
+#### **📊 DNS Records to Add**
+
+Add these three CNAME records (use same Railway target for all):
+
+**🎯 Root Domain** (`quantumcertify.tech`):
+```
+Record Type: CNAME
+Name/Host: @ (or blank/root)
+Value/Target: [paste Railway's CNAME target here]
+TTL: 300 or Auto
+```
+
+**🌐 WWW Subdomain** (`www.quantumcertify.tech`):
+```
+Record Type: CNAME
+Name/Host: www
+Value/Target: [paste Railway's CNAME target here]
+TTL: 300 or Auto
+```
+
+**⚙️ API Subdomain** (`api.quantumcertify.tech`):
+```
+Record Type: CNAME
+Name/Host: api
+Value/Target: [paste Railway's CNAME target here]
+TTL: 300 or Auto
+```
+
+#### **💡 Example with Real Values**
+
+If Railway gives you target: `quantumcertify-production-a1b2c3.up.railway.app`
+
+Your DNS records should look like:
+```
+CNAME  @    quantumcertify-production-a1b2c3.up.railway.app
+CNAME  www  quantumcertify-production-a1b2c3.up.railway.app  
+CNAME  api  quantumcertify-production-a1b2c3.up.railway.app
+```
+
+#### **💾 Save DNS Records**
+
+1. **Click "Save"** or **"Apply Changes"** in your registrar
+2. **Wait for confirmation** message (usually green checkmark)
+3. **DNS records are now active** (but need time to propagate globally)
+
+#### **⏰ DNS Propagation Timeline**
+
+| **Time** | **What Happens** | **Status** |
+|----------|------------------|------------|
+| **0-5 minutes** | Local DNS updates | Railway may detect change |
+| **5-30 minutes** | Regional DNS spreads | Most users see new DNS |
+| **30 minutes - 2 hours** | National DNS updates | 95% of users see change |
+| **2-24 hours** | Global DNS sync | 99.9% worldwide propagation |
+
+**🚀 Railway typically detects DNS changes within 5-15 minutes!**
+
+### **Step 5.2.1: Verify DNS Configuration**
+
+You can test if your DNS is configured correctly:
+
+```powershell
+# Test root domain
+nslookup quantumcertify.tech
+
+# Test www subdomain  
+nslookup www.quantumcertify.tech
+
+# Test api subdomain
+nslookup api.quantumcertify.tech
+```
+
+**✅ Success**: You should see the Railway CNAME target in the results
+
+### **Step 5.3: Railway Domain Verification Process**
+
+Once you've added the DNS records, Railway will:
+
+1. **Automatically detect DNS changes** (usually within 5-10 minutes)
+2. **Verify you control the domain** by checking the CNAME records
+3. **Issue SSL certificates** automatically via Let's Encrypt
+4. **Enable HTTPS** for all your domains
+5. **Show "Verified" status** in Railway dashboard
+
+### **Step 5.4: Add Multiple Domains (Optional)**
+
+To add `www.quantumcertify.tech` and `api.quantumcertify.tech`:
+
+1. **In Railway Dashboard**, click "Add Domain" again
+2. **Enter**: `www.quantumcertify.tech`
+3. **Railway shows CNAME** (likely the same as root domain)
+4. **Add DNS record** (already done in Step 5.2)
+5. **Repeat for**: `api.quantumcertify.tech`
+
+**💡 Pro Tip**: You can use the same CNAME target for all subdomains!
 
 ---
 
@@ -824,6 +982,32 @@ Railway automatically handles:
 - Check Railway build logs for specific ODBC errors
 ```
 
+#### **Issue 3.5: Healthcheck Failures (Service Unavailable)**
+```bash
+# Symptoms: Build succeeds but healthcheck fails repeatedly
+# App logs show "service unavailable" for /health endpoint
+
+# Common Root Causes:
+1. ODBC Driver version mismatch (app expects v18, system has v17)
+2. Python import errors during FastAPI startup
+3. Database connection blocking application start
+4. Missing critical environment variables
+5. FastAPI app fails to initialize properly
+
+# Debug Steps:
+✓ Check build logs for startup_test.py results (runs automatically)
+✓ Look for "ODBC Driver 18 for SQL Server" in installation logs
+✓ Verify environment variables: GEMINI_API_KEY, DB_SERVER, DB_NAME, etc.
+✓ Check for Python import errors in application startup logs
+✓ Review database connection attempts in logs
+
+# Fixed in Latest Version:
+- Updated database.py to use environment variable for ODBC driver version
+- Added comprehensive startup testing during build phase
+- Enhanced error logging in run_server.py
+- Added automatic ODBC driver verification
+```
+
 #### **Issue 4: Azure SQL Server Firewall Issues**
 ```bash
 # Railway uses dynamic IPs, Azure needs firewall rules
@@ -837,18 +1021,49 @@ Railway automatically handles:
 5. Consider using Azure Private Link for enhanced security
 ```
 
-#### **Issue 4: Custom Domain Not Working**
+#### **Issue 4: Domain Verification Failed**
 ```bash  
-# Check DNS propagation
-nslookup quantumcertify.tech
+# Railway can't verify domain ownership
+# Common causes:
+# 1. Wrong CNAME target value
+# 2. DNS not propagated yet  
+# 3. Conflicting DNS records
+# 4. TTL too high (slow updates)
 
-# Verify CNAME records point to Railway
-# Wait 24-48 hours for full DNS propagation
+# Solution Steps:
+1. Check CNAME target matches Railway exactly
+2. Remove any conflicting A records for same domain
+3. Wait 2-24 hours for DNS propagation
+4. Test DNS: nslookup quantumcertify.tech
+5. Use DNS checker: https://dnschecker.org
+6. Check Railway dashboard for verification status
+```
+
+#### **Issue 5: SSL Certificate Not Issued**
+```bash
+# HTTPS not working after domain verification
+# Causes: DNS issues, domain not verified, Railway processing
 
 # Solution:
-- Ensure DNS records are correctly configured
-- Check Railway domain status in dashboard  
-- Try using online DNS checker tools
+1. Ensure domain shows "Verified" in Railway dashboard
+2. Wait 5-15 minutes after DNS verification
+3. Check for mixed A/CNAME records (use only CNAME)
+4. Try accessing https://quantumcertify.tech
+5. Check Railway logs for SSL certificate errors
+```
+
+#### **Issue 6: Domain Authentication Errors**
+```bash
+# "Domain ownership cannot be verified" error
+# This means Railway can't confirm you own the domain
+
+# Solution:
+1. Verify you have access to domain DNS settings
+2. Check CNAME record exists and matches Railway target
+3. Remove any proxy services (CloudFlare proxy mode OFF)
+4. Ensure no typos in CNAME target
+5. Test: dig quantumcertify.tech (should show Railway target)
+6. Contact Railway support if DNS is correct but verification fails
 ```
 
 #### **Issue 5: Environment Variables Not Loading**

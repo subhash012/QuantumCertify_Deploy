@@ -44,9 +44,9 @@ else:
         pool_pre_ping=True,  # Enable connection health checks
         pool_recycle=3600,   # Recycle connections every hour
         echo=os.getenv('DEBUG', 'false').lower() == 'true',  # Log SQL queries in debug mode
-        # SQL Server specific configurations
+        # SQL Server specific configurations - Railway has ODBC Driver 18
         connect_args={
-            "driver": "ODBC Driver 17 for SQL Server",
+            "driver": DB_DRIVER,  # Use environment variable (ODBC Driver 18 for SQL Server)
             "TrustServerCertificate": "no",
             "Encrypt": "yes"
         }

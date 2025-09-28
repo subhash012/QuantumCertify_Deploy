@@ -41,4 +41,5 @@ typing_extensions==4.15.0
 
 # Railway-specific additions
 gunicorn==21.2.0
+httpx==0.27.2  # For FastAPI TestClient
 # Uses existing Azure SQL Server database

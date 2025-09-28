@@ -20,17 +20,48 @@ def main():
     # Environment detection
     environment = os.environ.get("RAILWAY_ENVIRONMENT", "development")
     
-    print(f"?? Starting QuantumCertify server for Railway.app")
-    print(f"?? Server: {host}:{port}")
-    print(f"?? Environment: {environment}")
-    print(f"?? Working Directory: {os.getcwd()}")
+    print(f"🚀 Starting QuantumCertify server for Railway.app")
+    print(f"🌐 Server: {host}:{port}")
+    print(f"🔧 Environment: {environment}")
+    print(f"📁 Working Directory: {os.getcwd()}")
+    print(f"🐍 Python Path: {sys.path}")
     
-    # Import the FastAPI app
+    # Test critical environment variables
+    required_env_vars = ['GEMINI_API_KEY', 'DB_SERVER', 'DB_NAME', 'DB_USERNAME', 'DB_PASSWORD', 'DB_DRIVER']
+    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        print(f"⚠️  Warning: Missing environment variables: {missing_vars}")
+    else:
+        print("✅ All required environment variables are set")
+    
+    # Import the FastAPI app with detailed error reporting
     try:
+        print("📦 Importing FastAPI application...")
         from app.main import app
-        print("? FastAPI application imported successfully")
+        print("✅ FastAPI application imported successfully")
+        
+        # Test that the app is properly configured
+        print(f"📋 App title: {app.title}")
+        print(f"📋 App version: {app.version}")
+        
+        # Test health endpoint exists
+        routes = [route.path for route in app.routes]
+        if "/health" in routes:
+            print("✅ Health endpoint found in routes")
+        else:
+            print("⚠️  Health endpoint not found in routes")
+        
     except ImportError as e:
-        print(f"? Failed to import FastAPI app: {e}")
+        print(f"❌ Failed to import FastAPI app: {e}")
+        print(f"🔍 Full traceback:")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error during app import: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
     
     # Configure uvicorn for Railway
@@ -49,16 +80,21 @@ def main():
     # Additional Railway-specific configuration
     if environment == "production":
         config.update({
-            "log_level": "warning",
-            "access_log": False,  # Reduce log noise in production
+            "log_level": "info",  # Keep info level for better debugging
+            "access_log": True,   # Keep access logs for debugging
         })
     
-    print(f"?? Starting uvicorn with config: {config}")
+    print(f"⚙️  Starting uvicorn with config:")
+    for key, value in config.items():
+        print(f"   {key}: {value}")
     
     try:
+        print("🎯 Starting uvicorn server...")
         uvicorn.run(**config)
     except Exception as e:
-        print(f"? Server failed to start: {e}")
+        print(f"❌ Server failed to start: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
