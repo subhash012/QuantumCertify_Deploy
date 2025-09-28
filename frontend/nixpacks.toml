@@ -12,8 +12,8 @@ cmd = 'npm ci'
 
 [phases.build] 
 cmd = '''
-export REACT_APP_API_URL=https://web-production-bf0b7.up.railway.app
-export REACT_APP_API_BASE_URL=https://web-production-bf0b7.up.railway.app
+export REACT_APP_API_URL=https://api.quantumcertify.tech
+export REACT_APP_API_BASE_URL=https://api.quantumcertify.tech
 npm run build
 '''
 
