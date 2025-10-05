@@ -48,12 +48,12 @@ QuantumCertify implements defense-in-depth security with multiple layers of prot
 
 ```bash
 # Cryptographic Secrets (CRITICAL - Never expose)
-SECRET_KEY=h3rA4!aCf+qgU7wsaXF58tCJKQIl1BV6AZ4T*3h+LQCeRi&^)#gCjmI-r^zpk^gZ
-JWT_SECRET=mbI2YJY-M3SZgkkwiq9ncfRGKR2FsKnpL5ETLLiEqig
-API_TOKEN=z15r1HLEesOIU1SRLgXTOzNrL7F8v-oRpI_ymVfsZ0I
+SECRET_KEY=<your-64-character-secret-key>
+JWT_SECRET=<your-32-character-jwt-secret>
+API_TOKEN=<your-32-character-api-token>
 
 # AI Service (CRITICAL - API limits and billing)
-GEMINI_API_KEY=your-secure-gemini-api-key
+GEMINI_API_KEY=<your-gemini-api-key>
 
 # Database Credentials (CRITICAL - Data access)
 DB_SERVER=your-server.database.windows.net

@@ -93,17 +93,17 @@ You need a Google Gemini API key for the AI features:
 
 ```powershell
 # PRODUCTION SECURITY CONFIGURATION
-# These are cryptographically secure production keys
-$env:SECRET_KEY = "h3rA4!aCf+qgU7wsaXF58tCJKQIl1BV6AZ4T*3h+LQCeRi&^)#gCjmI-r^zpk^gZ"
-$env:JWT_SECRET = "mbI2YJY-M3SZgkkwiq9ncfRGKR2FsKnpL5ETLLiEqig"
-$env:API_TOKEN = "z15r1HLEesOIU1SRLgXTOzNrL7F8v-oRpI_ymVfsZ0I"
+# Generate your own secure keys
+$env:SECRET_KEY = "<your-64-character-secret-key>"
+$env:JWT_SECRET = "<your-32-character-jwt-secret>"
+$env:API_TOKEN = "<your-32-character-api-token>"
 
 # AI SERVICE CONFIGURATION
-$env:GEMINI_API_KEY = "AIzaSyDYyWMjYAFKwehFdycYa2taNe1K53f9-Jc"
+$env:GEMINI_API_KEY = "<your-gemini-api-key>"
 
-# DATABASE SECURITY (Generate secure password)
-$env:DB_USERNAME = "sqladminuser"
-$env:DB_PASSWORD = "Subhash1234#"
+# DATABASE SECURITY
+$env:DB_USERNAME = "<your-username>"
+$env:DB_PASSWORD = "<your-password>"
 
 # PRODUCTION APPLICATION SETTINGS
 $env:ENVIRONMENT = "production"

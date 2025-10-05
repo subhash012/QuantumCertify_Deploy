@@ -88,10 +88,10 @@ DB_USERNAME=secure-username
 DB_PASSWORD=secure-password
 DB_DRIVER=ODBC Driver 17 for SQL Server
 
-# Security (Generated secure keys)
-SECRET_KEY=h3rA4!aCf+qgU7wsaXF58tCJKQIl1BV6AZ4T*3h+LQCeRi&^)#gCjmI-r^zpk^gZ
-JWT_SECRET=mbI2YJY-M3SZgkkwiq9ncfRGKR2FsKnpL5ETLLiEqig
-API_TOKEN=z15r1HLEesOIU1SRLgXTOzNrL7F8v-oRpI_ymVfsZ0I
+# Security (Generate your own secure keys)
+SECRET_KEY=<your-64-character-secret-key>
+JWT_SECRET=<your-32-character-jwt-secret>
+API_TOKEN=<your-32-character-api-token>
 
 # Production Settings
 ENVIRONMENT=production

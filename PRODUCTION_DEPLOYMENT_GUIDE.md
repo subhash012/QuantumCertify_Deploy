@@ -19,9 +19,9 @@ DB_PORT=1433
 DB_DRIVER=ODBC Driver 17 for SQL Server
 
 # Security Configuration (Required)
-SECRET_KEY=h3rA4!aCf+qgU7wsaXF58tCJKQIl1BV6AZ4T*3h+LQCeRi&^)#gCjmI-r^zpk^gZ
-JWT_SECRET=mbI2YJY-M3SZgkkwiq9ncfRGKR2FsKnpL5ETLLiEqig
-API_TOKEN=z15r1HLEesOIU1SRLgXTOzNrL7F8v-oRpI_ymVfsZ0I
+SECRET_KEY=<your-64-character-secret-key>
+JWT_SECRET=<your-32-character-jwt-secret>
+API_TOKEN=<your-32-character-api-token>
 
 # Domain Configuration (Required)
 ALLOWED_ORIGINS=https://quantumcertify.com,https://www.quantumcertify.com,https://api.quantumcertify.com
@@ -98,10 +98,10 @@ logs/
 ### Option 1: Azure Container Instances (Recommended)
 ```powershell
 # Set environment variables
-$env:GEMINI_API_KEY = "your-api-key"
-$env:SECRET_KEY = "h3rA4!aCf+qgU7wsaXF58tCJKQIl1BV6AZ4T*3h+LQCeRi&^)#gCjmI-r^zpk^gZ"
-$env:JWT_SECRET = "mbI2YJY-M3SZgkkwiq9ncfRGKR2FsKnpL5ETLLiEqig"
-$env:API_TOKEN = "z15r1HLEesOIU1SRLgXTOzNrL7F8v-oRpI_ymVfsZ0I"
+$env:GEMINI_API_KEY = "<your-gemini-api-key>"
+$env:SECRET_KEY = "<your-64-character-secret-key>"
+$env:JWT_SECRET = "<your-32-character-jwt-secret>"
+$env:API_TOKEN = "<your-32-character-api-token>"
 
 # Run deployment script
 ./deploy-azure.ps1

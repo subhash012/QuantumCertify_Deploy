@@ -66,10 +66,10 @@ Complete production deployment solution for QuantumCertify with enterprise secur
 ### Step 1: Configure Production Environment
 ```powershell
 # Set all required production environment variables
-$env:GEMINI_API_KEY = "your-production-gemini-api-key"
-$env:SECRET_KEY = "h3rA4!aCf+qgU7wsaXF58tCJKQIl1BV6AZ4T*3h+LQCeRi&^)#gCjmI-r^zpk^gZ"
-$env:JWT_SECRET = "mbI2YJY-M3SZgkkwiq9ncfRGKR2FsKnpL5ETLLiEqig"
-$env:API_TOKEN = "z15r1HLEesOIU1SRLgXTOzNrL7F8v-oRpI_ymVfsZ0I"
+$env:GEMINI_API_KEY = "<your-gemini-api-key>"
+$env:SECRET_KEY = "<your-64-character-secret-key>"
+$env:JWT_SECRET = "<your-32-character-jwt-secret>"
+$env:API_TOKEN = "<your-32-character-api-token>"
 
 # Navigate to your project directory
 cd C:\Users\91974\Downloads\QuantumCertify\QuantumCertify

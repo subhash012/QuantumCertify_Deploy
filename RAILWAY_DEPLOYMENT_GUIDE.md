@@ -304,21 +304,21 @@ Railway needs specific configuration files to deploy your application properly.
    # CORS Configuration
    ALLOWED_ORIGINS=https://quantumcertify.tech,https://www.quantumcertify.tech,https://api.quantumcertify.tech
    
-   # Security Configuration (GENERATED SECURE KEYS)
-   SECRET_KEY=h3rA4!aCf+qgU7wsaXF58tCJKQIl1BV6AZ4T*3h+LQCeRi&^)#gCjmI-r^zpk^gZ
-   JWT_SECRET=mbI2YJY-M3SZgkkwiq9ncfRGKR2FsKnpL5ETLLiEqig
-   API_TOKEN=z15r1HLEesOIU1SRLgXTOzNrL7F8v-oRpI_ymVfsZ0I
+   # Security Configuration (Generate your own keys)
+   SECRET_KEY=<your-64-character-secret-key>
+   JWT_SECRET=<your-32-character-jwt-secret>
+   API_TOKEN=<your-32-character-api-token>
    
-   # Database (Your existing Azure SQL Server)
-   DB_SERVER=quantumcertify-sqlsrv.database.windows.net
+   # Database (Your Azure SQL Server)
+   DB_SERVER=<your-server>.database.windows.net
    DB_NAME=QuantumCertifyDB
-   DB_USERNAME=sqladminuser
-   DB_PASSWORD=Subhash1234#
+   DB_USERNAME=<your-username>
+   DB_PASSWORD=<your-password>
    DB_PORT=1433
    DB_DRIVER=ODBC Driver 18 for SQL Server
    
-   # AI Configuration (You'll add your key)
-   GEMINI_API_KEY=AIzaSyDYyWMjYAFKwehFdycYa2taNe1K53f9-Jc
+   # AI Configuration
+   GEMINI_API_KEY=<your-gemini-api-key>
    
    # Railway-specific
    PORT=8000
@@ -504,19 +504,19 @@ You can watch this in real-time in the Railway dashboard. The build takes 2-3 mi
    Value: https://quantumcertify.tech,https://www.quantumcertify.tech,https://api.quantumcertify.tech
 
    Name: GEMINI_API_KEY
-   Value: AIzaSyDYyWMjYAFKwehFdycYa2taNe1K53f9-Jc
+   Value: <your-gemini-api-key>
 
    Name: DB_SERVER
-   Value: quantumcertify-sqlsrv.database.windows.net
+   Value: <your-server>.database.windows.net
 
    Name: DB_NAME
    Value: QuantumCertifyDB
 
    Name: DB_USERNAME
-   Value: sqladminuser
+   Value: <your-username>
 
    Name: DB_PASSWORD
-   Value: Subhash1234#
+   Value: <your-password>
 
    Name: DB_PORT
    Value: 1433

@@ -47,9 +47,9 @@
 #### 🔧 **Production Environment Variables**
 ```bash
 # Critical Security Variables (REQUIRED)
-SECRET_KEY=h3rA4!aCf+qgU7wsaXF58tCJKQIl1BV6AZ4T*3h+LQCeRi&^)#gCjmI-r^zpk^gZ
-JWT_SECRET=mbI2YJY-M3SZgkkwiq9ncfRGKR2FsKnpL5ETLLiEqig
-API_TOKEN=z15r1HLEesOIU1SRLgXTOzNrL7F8v-oRpI_ymVfsZ0I
+SECRET_KEY=<your-64-character-secret-key>
+JWT_SECRET=<your-32-character-jwt-secret>
+API_TOKEN=<your-32-character-api-token>
 
 # Production Configuration
 ENVIRONMENT=production
