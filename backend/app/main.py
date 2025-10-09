@@ -70,7 +70,8 @@ def _analyze_pqc_algorithm(algorithm_name: str) -> bool:
     """
     pqc_keywords = [
         'dilithium', 'kyber', 'falcon', 'mceliece', 'frodo', 'saber', 
-        'ntru', 'bike', 'crystals', 'sphincs', 'picnic', 'rainbow'
+        'ntru', 'bike', 'crystals', 'sphincs', 'picnic', 'rainbow',
+        'ml-dsa', 'ml-kem', 'slh-dsa'  # NIST standardized names
     ]
     algorithm_lower = algorithm_name.lower()
     return any(keyword in algorithm_lower for keyword in pqc_keywords)
@@ -606,17 +607,67 @@ async def upload_certificate(file: UploadFile = File(...), db: Session = Depends
         # Extract certificate details
         issuer = cert.issuer.rfc4514_string()
         subject = cert.subject.rfc4514_string()
-        public_key = cert.public_key()
-        key_type = public_key.__class__.__name__
-        key_size = getattr(public_key, "key_size", None)
+        
+        # Try to extract public key info (may fail for PQC certificates)
+        try:
+            public_key = cert.public_key()
+            key_type = public_key.__class__.__name__
+            key_size = getattr(public_key, "key_size", None)
+            pubkey_oid = getattr(getattr(public_key, "oid", None), "dotted_string", None)
+        except ValueError as e:
+            # Handle PQC certificates where cryptography library doesn't recognize the key type
+            # Extract OID from error message: "Unknown key type: 2.16.840.1.101.3.4.3.18"
+            error_msg = str(e)
+            logging.warning(f"Could not parse public key (likely PQC): {error_msg}")
+            
+            if "Unknown key type:" in error_msg:
+                pubkey_oid = error_msg.split("Unknown key type:")[-1].strip()
+                key_type = "Unknown (PQC)"
+                key_size = None
+                
+                # Detect specific PQC algorithms from OID
+                pqc_oids = {
+                    "2.16.840.1.101.3.4.3.17": "ML-DSA-65",  # Dilithium3
+                    "2.16.840.1.101.3.4.3.18": "ML-DSA-87",  # Dilithium5
+                    "2.16.840.1.101.3.4.4.1": "ML-KEM-512",  # Kyber512
+                    "2.16.840.1.101.3.4.4.2": "ML-KEM-768",  # Kyber768
+                    "2.16.840.1.101.3.4.4.3": "ML-KEM-1024", # Kyber1024
+                }
+                
+                if pubkey_oid in pqc_oids:
+                    key_type = pqc_oids[pubkey_oid]
+                    logging.info(f"Detected PQC algorithm: {key_type} (OID: {pubkey_oid})")
+            else:
+                raise
+        except Exception as e:
+            logging.error(f"Unexpected error parsing public key: {e}")
+            key_type = "Unknown"
+            key_size = None
+            pubkey_oid = None
 
         # Signature algorithm (OID + name)
-        sig_oid = cert.signature_algorithm_oid.dotted_string
-        sig_name = cert.signature_algorithm_oid._name
+        # Handle cases where cryptography library doesn't recognize the OID
+        try:
+            sig_oid = cert.signature_algorithm_oid.dotted_string
+            sig_name = cert.signature_algorithm_oid._name
+            
+            # Detect PQC signature algorithms from OID
+            pqc_sig_oids = {
+                "2.16.840.1.101.3.4.3.17": "ML-DSA-65 (Dilithium3)",
+                "2.16.840.1.101.3.4.3.18": "ML-DSA-87 (Dilithium5)",
+            }
+            
+            if sig_oid in pqc_sig_oids:
+                sig_name = pqc_sig_oids[sig_oid]
+                logging.info(f"Detected PQC signature: {sig_name} (OID: {sig_oid})")
+                
+        except Exception as e:
+            logging.warning(f"Could not parse signature algorithm OID: {e}")
+            sig_oid = "unknown"
+            sig_name = "Unknown Signature Algorithm"
 
         # Public key algorithm (name only — OIDs depend on key type)
         pubkey_name = key_type
-        pubkey_oid = getattr(getattr(public_key, "oid", None), "dotted_string", None)
 
         # --- DB Lookup Logic with fallback ---
         pubkey_algo = None
@@ -643,6 +694,20 @@ async def upload_certificate(file: UploadFile = File(...), db: Session = Depends
 
         sig_algorithm_name = sig_algo.signature_algorithm_name if sig_algo else sig_name
         sig_is_pqc = sig_algo.is_pqc if sig_algo else _analyze_pqc_algorithm(sig_name)
+        
+        # Additional PQC detection from certificate subject/issuer
+        # Check if certificate explicitly mentions PQC algorithms in CN or O fields
+        cert_text = f"{subject} {issuer}".lower()
+        if any(keyword in cert_text for keyword in ['ml-dsa', 'ml-kem', 'dilithium', 'kyber', 'falcon', 'sphincs']):
+            # If certificate mentions PQC in subject/issuer, it's likely a PQC cert
+            if 'ml-dsa' in cert_text or 'dilithium' in cert_text:
+                sig_is_pqc = True
+                if sig_algorithm_name == "Unknown Signature Algorithm":
+                    sig_algorithm_name = "ML-DSA (CRYSTALS-Dilithium)"
+            if 'ml-kem' in cert_text or 'kyber' in cert_text:
+                pubkey_is_pqc = True
+                if pubkey_algorithm_name == key_type:
+                    pubkey_algorithm_name = "ML-KEM (CRYSTALS-Kyber)"
 
         # Generate AI recommendations for non-PQC algorithms
         recommendations = {}
