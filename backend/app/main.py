@@ -51,9 +51,11 @@ try:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     if GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-pro')
+        # Use the latest stable Gemini 2.5 Flash model
+        # This is the mid-size multimodal model that supports up to 1 million tokens
+        model = genai.GenerativeModel('gemini-2.5-flash')
         AI_AVAILABLE = True
-        logging.info("Gemini AI initialized successfully")
+        logging.info("Gemini AI initialized successfully with gemini-2.5-flash")
     else:
         AI_AVAILABLE = False
         logging.warning("Gemini API key not found")

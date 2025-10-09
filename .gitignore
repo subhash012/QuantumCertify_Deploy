@@ -206,3 +206,93 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ===================================
+# QuantumCertify Specific Ignores
+# ===================================
+
+# Environment files (CRITICAL - Contains API keys!)
+.env
+.env.*
+backend/.env
+frontend/.env
+*.env.local
+*.env.production
+*.env.development
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+quantumcertify.db
+backend/quantumcertify.db
+
+# Certificate test files
+*.pem
+*.crt
+*.cer
+*.der
+*.pfx
+*.p12
+test_cert.*
+cert_*.pem
+
+# Log files
+*.log
+logs/
+backend/logs/
+frontend/logs/
+access.log
+security.log
+performance.log
+error.log
+
+# Test scripts (temporary)
+test_*.py
+check_*.py
+analyze_*.py
+quick_test.py
+*_test.py
+
+# Temporary documentation (debugging artifacts)
+*_STATUS.md
+*_INVESTIGATION.md
+*_REPORT.md
+*_SUMMARY.md
+*_FIX.md
+*_TEST_GUIDE.md
+AI_*.md
+API_*.md
+
+# Railway deployment
+.railway/
+
+# Docker
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+frontend/build/
+frontend/dist/
+*.pyc
+__pycache__/
+
+# Backup files
+*.bak
+*.backup
+*.old

@@ -8,7 +8,7 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds timeout
+  timeout: 120000, // 120 seconds (2 minutes) timeout for AI analysis
   withCredentials: true, // Include cookies for authentication
   headers: {
     'Content-Type': 'application/json',
@@ -68,6 +68,7 @@ export const apiService = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 180000, // 3 minutes for AI-powered certificate analysis
     });
   },
   
