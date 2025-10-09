@@ -684,6 +684,8 @@ async def upload_certificate(file: UploadFile = File(...), db: Session = Depends
             "certificate_info": {
                 "issuer": issuer,
                 "subject": subject,
+                "valid_from": cert.not_valid_before.isoformat(),
+                "valid_until": cert.not_valid_after.isoformat(),
                 "expiry_date": cert.not_valid_after.isoformat(),
                 "serial_number": str(cert.serial_number),
                 "version": cert.version.name if hasattr(cert, 'version') else "Unknown"
