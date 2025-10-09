@@ -6,9 +6,9 @@ nixpkgs = ["python311", "python311Packages.pip", "curl"]
 
 [phases.install]
 cmds = [
-    # Install ODBC dependencies and Microsoft ODBC Driver for Azure SQL Server
+    # Install Python and ODBC dependencies
     "apt-get update",
-    "apt-get install -y curl gnupg2 apt-transport-https ca-certificates",
+    "apt-get install -y python3 python3-pip curl gnupg2 apt-transport-https ca-certificates",
     # Add Microsoft repository (Debian 11 - Nixpacks uses Debian)
     "curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -",
     "curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list",
