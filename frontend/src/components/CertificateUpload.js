@@ -130,11 +130,19 @@ const CertificateUpload = () => {
                 </div>
                 <div className="info-row">
                   <span className="info-label">Valid From:</span>
-                  <span className="info-value">{result.certificate_info?.not_before || 'N/A'}</span>
+                  <span className="info-value">
+                    {result.certificate_info?.valid_from 
+                      ? formatDate(result.certificate_info.valid_from) 
+                      : (result.certificate_info?.not_before || 'N/A')}
+                  </span>
                 </div>
                 <div className="info-row">
                   <span className="info-label">Valid Until:</span>
-                  <span className="info-value">{result.certificate_info?.not_after || (result.expiry_date ? formatDate(result.expiry_date) : 'N/A')}</span>
+                  <span className="info-value">
+                    {result.certificate_info?.valid_until 
+                      ? formatDate(result.certificate_info.valid_until) 
+                      : (result.certificate_info?.not_after || (result.expiry_date ? formatDate(result.expiry_date) : 'N/A'))}
+                  </span>
                 </div>
                 <div className="info-row">
                   <span className="info-label">Serial Number:</span>
