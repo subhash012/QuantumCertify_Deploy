@@ -658,7 +658,7 @@ async def upload_certificate(file: UploadFile = File(...), db: Session = Depends
                 "algorithm_type": "public_key",
                 "key_size": key_size,
                 "certificate_type": "X.509",
-                "expiry_date": cert.not_valid_after.isoformat(),
+                "expiry_date": cert.not_valid_after_utc.isoformat(),
                 "issuer": issuer,
                 "current_usage": "Certificate Public Key"
             }
@@ -670,7 +670,7 @@ async def upload_certificate(file: UploadFile = File(...), db: Session = Depends
             context = {
                 "algorithm_type": "digital_signature", 
                 "certificate_type": "X.509",
-                "expiry_date": cert.not_valid_after.isoformat(),
+                "expiry_date": cert.not_valid_after_utc.isoformat(),
                 "issuer": issuer,
                 "current_usage": "Certificate Digital Signature"
             }
@@ -684,9 +684,9 @@ async def upload_certificate(file: UploadFile = File(...), db: Session = Depends
             "certificate_info": {
                 "issuer": issuer,
                 "subject": subject,
-                "valid_from": cert.not_valid_before.isoformat(),
-                "valid_until": cert.not_valid_after.isoformat(),
-                "expiry_date": cert.not_valid_after.isoformat(),
+                "valid_from": cert.not_valid_before_utc.isoformat(),
+                "valid_until": cert.not_valid_after_utc.isoformat(),
+                "expiry_date": cert.not_valid_after_utc.isoformat(),
                 "serial_number": str(cert.serial_number),
                 "version": cert.version.name if hasattr(cert, 'version') else "Unknown"
             },
