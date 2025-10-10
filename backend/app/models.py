@@ -11,6 +11,10 @@ class PublicKeyAlgorithm(Base):
     public_key_algorithm_oid = Column(String(255), nullable=True)
     category = Column(String(50), nullable=False, default="Unknown")
     is_pqc = Column(Boolean, nullable=True, default=False)
+    description = Column(Text, nullable=True)
+    security_level = Column(String(50), nullable=True)
+    is_quantum_safe = Column(Boolean, nullable=True, default=False)
+    key_size = Column(Integer, nullable=True)
 
 # Signature Algorithms Table
 class SignatureAlgorithm(Base):
@@ -21,6 +25,9 @@ class SignatureAlgorithm(Base):
     signature_algorithm_oid = Column(String(255), nullable=True)
     category = Column(String(50), nullable=False, default="Unknown")
     is_pqc = Column(Boolean, nullable=False, default=False)
+    description = Column(Text, nullable=True)
+    security_level = Column(String(50), nullable=True)
+    is_quantum_safe = Column(Boolean, nullable=True, default=False)
 
 # Certificate Analysis Records
 class CertificateAnalysis(Base):
