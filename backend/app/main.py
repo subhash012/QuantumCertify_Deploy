@@ -1371,9 +1371,8 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                         if public_key_info.is_pqc:
                             is_pqc = True
                             pqc_algorithm = public_key_algo
-                        db_key_size = getattr(public_key_info, 'key_size', None)
-                        if db_key_size:
-                            public_key_size = db_key_size
+                        if public_key_info.key_size:
+                            public_key_size = public_key_info.key_size
                 
                 # FALLBACK: If OID lookup failed, try name-based lookup
                 if not public_key_info and public_key_algo:
@@ -1436,11 +1435,11 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
         quantum_safe = False
         quantum_safe_reason = []
         
-        if is_pqc or (public_key_info and getattr(public_key_info, 'is_quantum_safe', False)):
+        if is_pqc or (public_key_info and public_key_info.is_quantum_safe):
             quantum_safe = True
             quantum_safe_reason.append("Uses post-quantum cryptography")
         
-        if signature_info and getattr(signature_info, 'is_quantum_safe', False):
+        if signature_info and signature_info.is_quantum_safe:
             quantum_safe = True
             quantum_safe_reason.append("Signature algorithm is quantum-resistant")
         
@@ -1464,11 +1463,11 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                 if public_key_info:
                     context["public_key_details"] = {
                         "name": public_key_info.public_key_algorithm_name,
-                        "description": getattr(public_key_info, 'description', None),
-                        "security_level": getattr(public_key_info, 'security_level', None),
-                        "is_quantum_safe": getattr(public_key_info, 'is_quantum_safe', False),
+                        "description": public_key_info.description,
+                        "security_level": public_key_info.security_level,
+                        "is_quantum_safe": public_key_info.is_quantum_safe,
                         "is_pqc": public_key_info.is_pqc,
-                        "key_size": getattr(public_key_info, 'key_size', None),
+                        "key_size": public_key_info.key_size,
                         "oid": public_key_info.public_key_algorithm_oid
                     }
                     logging.info(f"Added public key DB details to AI context: {public_key_info.public_key_algorithm_name}")
@@ -1476,9 +1475,9 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                 if signature_info:
                     context["signature_details"] = {
                         "name": signature_info.signature_algorithm_name,
-                        "description": getattr(signature_info, 'description', None),
-                        "security_level": getattr(signature_info, 'security_level', None),
-                        "is_quantum_safe": getattr(signature_info, 'is_quantum_safe', False),
+                        "description": signature_info.description,
+                        "security_level": signature_info.security_level,
+                        "is_quantum_safe": signature_info.is_quantum_safe,
                         "is_pqc": signature_info.is_pqc,
                         "oid": signature_info.signature_algorithm_oid
                     }
@@ -1580,18 +1579,18 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
         if public_key_info:
             analysis["public_key_info"] = {
                 "name": public_key_info.public_key_algorithm_name,
-                "description": getattr(public_key_info, 'description', None),
-                "key_size": getattr(public_key_info, 'key_size', None),
-                "security_level": getattr(public_key_info, 'security_level', None),
-                "is_quantum_safe": getattr(public_key_info, 'is_quantum_safe', False)
+                "description": public_key_info.description,
+                "key_size": public_key_info.key_size,
+                "security_level": public_key_info.security_level,
+                "is_quantum_safe": public_key_info.is_quantum_safe
             }
         
         if signature_info:
             analysis["signature_info"] = {
                 "name": signature_info.signature_algorithm_name,
-                "description": getattr(signature_info, 'description', None),
-                "security_level": getattr(signature_info, 'security_level', None),
-                "is_quantum_safe": getattr(signature_info, 'is_quantum_safe', False)
+                "description": signature_info.description,
+                "security_level": signature_info.security_level,
+                "is_quantum_safe": signature_info.is_quantum_safe
             }
         
         return analysis
