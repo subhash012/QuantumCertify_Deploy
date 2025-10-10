@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import CertificateUpload from './components/CertificateUpload';
 import Dashboard from './components/Dashboard';
 import About from './components/About';
+import DomainScanner from './components/DomainScanner';
 import './App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
             <div className="nav-menu">
               <Link to="/" className="nav-link">Dashboard</Link>
               <Link to="/upload" className="nav-link">Upload Certificate</Link>
+              <Link to="/scanner" className="nav-link">Domain Scanner</Link>
               <Link to="/about" className="nav-link">About</Link>
             </div>
           </div>
@@ -26,6 +28,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/upload" element={<CertificateUpload />} />
+            <Route path="/scanner" element={<DomainScanner />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </main>

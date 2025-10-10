@@ -103,6 +103,17 @@ const CertificateUpload = () => {
           >
             {loading ? 'Analyzing...' : 'Analyze Certificate'}
           </button>
+          
+          {loading && (
+            <div className="info-message">
+              <span className="spinner-icon">⏳</span>
+              <p>
+                <strong>AI Analysis in Progress...</strong><br />
+                This may take 2-4 minutes as we're using Google Gemini AI to provide detailed 
+                quantum safety recommendations and migration strategies. Please be patient.
+              </p>
+            </div>
+          )}
         </form>
 
         {error && (
