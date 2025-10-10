@@ -1365,9 +1365,9 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                     ).first()
                     
                     if public_key_info:
-                        logging.info(f"✅ Found public key algorithm in DB by OID: {public_key_info.name}")
+                        logging.info(f"✅ Found public key algorithm in DB by OID: {public_key_info.public_key_algorithm_name}")
                         # Update algorithm name from database
-                        public_key_algo = public_key_info.public_key_algorithm_name or public_key_info.name
+                        public_key_algo = public_key_info.public_key_algorithm_name
                         if public_key_info.is_pqc:
                             is_pqc = True
                             pqc_algorithm = public_key_algo
@@ -1378,14 +1378,14 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                 if not public_key_info and public_key_algo:
                     logging.info(f"OID lookup failed, trying name-based lookup: {public_key_algo}")
                     public_key_info = db.query(PublicKeyAlgorithm).filter(
-                        PublicKeyAlgorithm.name.ilike(f"%{public_key_algo}%")
+                        PublicKeyAlgorithm.public_key_algorithm_name.ilike(f"%{public_key_algo}%")
                     ).first()
                     
                     if public_key_info:
-                        logging.info(f"✅ Found public key algorithm in DB by name: {public_key_info.name}")
+                        logging.info(f"✅ Found public key algorithm in DB by name: {public_key_info.public_key_algorithm_name}")
                         if public_key_info.is_pqc:
                             is_pqc = True
-                            pqc_algorithm = public_key_info.public_key_algorithm_name or public_key_info.name
+                            pqc_algorithm = public_key_info.public_key_algorithm_name
                 
                 # Try OID-based lookup for signature algorithm
                 if signature_oid:
@@ -1395,9 +1395,9 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                     ).first()
                     
                     if signature_info:
-                        logging.info(f"✅ Found signature algorithm in DB by OID: {signature_info.name}")
+                        logging.info(f"✅ Found signature algorithm in DB by OID: {signature_info.signature_algorithm_name}")
                         # Update algorithm name from database
-                        signature_algo = signature_info.signature_algorithm_name or signature_info.name
+                        signature_algo = signature_info.signature_algorithm_name
                         if signature_info.is_pqc:
                             is_pqc = True
                 
@@ -1405,11 +1405,11 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                 if not signature_info and signature_algo:
                     logging.info(f"OID lookup failed, trying name-based lookup: {signature_algo}")
                     signature_info = db.query(SignatureAlgorithm).filter(
-                        SignatureAlgorithm.name.ilike(f"%{signature_algo}%")
+                        SignatureAlgorithm.signature_algorithm_name.ilike(f"%{signature_algo}%")
                     ).first()
                     
                     if signature_info:
-                        logging.info(f"✅ Found signature algorithm in DB by name: {signature_info.name}")
+                        logging.info(f"✅ Found signature algorithm in DB by name: {signature_info.signature_algorithm_name}")
                         if signature_info.is_pqc:
                             is_pqc = True
                             
@@ -1462,7 +1462,7 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                 # Add database information to context for better AI analysis
                 if public_key_info:
                     context["public_key_details"] = {
-                        "name": public_key_info.name,
+                        "name": public_key_info.public_key_algorithm_name,
                         "description": public_key_info.description,
                         "security_level": public_key_info.security_level,
                         "is_quantum_safe": public_key_info.is_quantum_safe,
@@ -1470,18 +1470,18 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
                         "key_size": public_key_info.key_size,
                         "oid": public_key_info.public_key_algorithm_oid
                     }
-                    logging.info(f"Added public key DB details to AI context: {public_key_info.name}")
+                    logging.info(f"Added public key DB details to AI context: {public_key_info.public_key_algorithm_name}")
                 
                 if signature_info:
                     context["signature_details"] = {
-                        "name": signature_info.name,
+                        "name": signature_info.signature_algorithm_name,
                         "description": signature_info.description,
                         "security_level": signature_info.security_level,
                         "is_quantum_safe": signature_info.is_quantum_safe,
                         "is_pqc": signature_info.is_pqc,
                         "oid": signature_info.signature_algorithm_oid
                     }
-                    logging.info(f"Added signature DB details to AI context: {signature_info.name}")
+                    logging.info(f"Added signature DB details to AI context: {signature_info.signature_algorithm_name}")
                 
                 # Use the REAL Gemini AI for non-quantum-safe algorithms
                 if not quantum_safe:
@@ -1578,7 +1578,7 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
         # Add database info if available
         if public_key_info:
             analysis["public_key_info"] = {
-                "name": public_key_info.name,
+                "name": public_key_info.public_key_algorithm_name,
                 "description": public_key_info.description,
                 "key_size": public_key_info.key_size,
                 "security_level": public_key_info.security_level,
@@ -1587,7 +1587,7 @@ async def analyze_certificate_data(cert: x509.Certificate, db: Session) -> Dict:
         
         if signature_info:
             analysis["signature_info"] = {
-                "name": signature_info.name,
+                "name": signature_info.signature_algorithm_name,
                 "description": signature_info.description,
                 "security_level": signature_info.security_level,
                 "is_quantum_safe": signature_info.is_quantum_safe
