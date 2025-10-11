@@ -49,7 +49,7 @@ except ImportError:
 
 # Application configuration from environment variables
 APP_VERSION = os.getenv("PROJECT_VERSION", "2.0.0")
-CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "support@quantumcertify.com")
+CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "quantumcertify@gmail.com")
 DEVELOPER_NAME = os.getenv("DEVELOPER_NAME", "QuantumCertify Team")
 DEBUG_MODE = os.getenv("DEBUG", "false").lower() == "true"
 

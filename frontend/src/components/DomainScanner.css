@@ -81,7 +81,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     color: white;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--bold-teal) 0%, var(--propel-mint) 100%);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -90,7 +90,7 @@
 
 .scan-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 163, 161, 0.4);
 }
 
 .scan-button:disabled {
@@ -127,13 +127,13 @@
 }
 
 .info-message {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-left: 4px solid #3b82f6;
+    background: var(--teal-light);
+    border: 1px solid var(--propel-mint);
+    border-left: 4px solid var(--bold-teal);
     border-radius: 0.5rem;
     padding: 1rem;
     margin-top: 1rem;
-    color: #1e40af;
+    color: var(--bold-teal);
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -183,6 +183,52 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.results-header h2 {
+    color: var(--bold-teal);
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--bold-teal);
+    color: var(--white);
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-download:hover {
+    background-color: #008c8a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 163, 161, 0.3);
+}
+
+.btn-download:active {
+    transform: translateY(0);
+}
+
+.btn-download svg {
+    width: 20px;
+    height: 20px;
 }
 
 .scan-summary {
@@ -401,7 +447,7 @@
 }
 
 .pqc-highlight {
-    background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+    background: linear-gradient(135deg, rgba(0, 163, 161, 0.12) 0%, rgba(160, 217, 180, 0.12) 100%);
     padding: 0.75rem;
     border-radius: 4px;
     margin: 0 -0.75rem 0.75rem;
@@ -422,12 +468,12 @@
 }
 
 .ai-recommendation {
-    background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
-    border-left: 4px solid #667eea;
+    background: linear-gradient(135deg, rgba(0, 163, 161, 0.06) 0%, rgba(160, 217, 180, 0.06) 100%);
+    border-left: 4px solid var(--bold-teal);
 }
 
 .ai-recommendation h4 {
-    color: #667eea;
+    color: var(--bold-teal);
     margin-bottom: 1rem;
     font-size: 1.2rem;
 }
@@ -477,11 +523,11 @@
 }
 
 .pqc-algorithm-list li {
-    background-color: #f0f0f0;
+    background-color: var(--teal-light);
     padding: 0.5rem 1rem;
     margin-bottom: 0.5rem;
     border-radius: 4px;
-    border-left: 3px solid #667eea;
+    border-left: 3px solid var(--bold-teal);
 }
 
 .migration-alert {

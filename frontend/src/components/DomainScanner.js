@@ -87,16 +87,403 @@ const DomainScanner = () => {
 
     const getQuantumSafetyBadge = (isQuantumSafe) => {
         return isQuantumSafe ? (
-            <span className="badge badge-safe">✓ Quantum Safe</span>
+            <span className="badge badge-safe">Quantum Safe</span>
         ) : (
-            <span className="badge badge-vulnerable">⚠ Vulnerable to Quantum Attacks</span>
+            <span className="badge badge-vulnerable">Vulnerable to Quantum Attacks</span>
         );
+    };
+
+    const downloadPDF = () => {
+        if (!scanResults) return;
+
+        // Debug: Log the scan results structure
+        console.log('Full Scan Results:', scanResults);
+        console.log('Certificates:', scanResults.certificates);
+        if (scanResults.certificates && scanResults.certificates.length > 0) {
+            console.log('First Certificate:', scanResults.certificates[0]);
+        }
+
+        // Helper function to safely get nested values
+        const safeGet = (obj, path, defaultValue = 'N/A') => {
+            const value = path.split('.').reduce((acc, part) => acc && acc[part], obj);
+            return value !== undefined && value !== null && value !== '' ? value : defaultValue;
+        };
+
+        // Format date
+        const formatDatePDF = (dateStr) => {
+            if (!dateStr) return 'N/A';
+            try {
+                return new Date(dateStr).toLocaleString('en-US', { 
+                    dateStyle: 'full', 
+                    timeStyle: 'short' 
+                });
+            } catch {
+                return dateStr;
+            }
+        };
+
+        // Generate certificate details HTML
+        const generateCertificateDetails = () => {
+            console.log('generateCertificateDetails called');
+            console.log('certificates in generator:', scanResults.certificates);
+            
+            let html = '';
+            
+            // Check if certificates exists and has data
+            if (!scanResults.certificates || scanResults.certificates.length === 0) {
+                console.log('No certificates found - returning fallback');
+                return `
+                <div class="section">
+                    <h2>Certificate Details</h2>
+                    <p>No certificates found in this scan.</p>
+                </div>`;
+            }
+            
+            console.log('Processing', scanResults.certificates.length, 'certificates');
+            
+            scanResults.certificates.forEach((certData, index) => {
+                console.log(`Certificate ${index}:`, certData);
+                
+                // Skip if certificate has an error
+                if (certData.error) {
+                    html += `
+                    <div class="section">
+                        <h2>Certificate ${index + 1} - Port ${certData.port}</h2>
+                        <div class="error-box" style="background: #fee; border-left: 4px solid #c00; padding: 15px; margin: 10px 0;">
+                            <p style="color: #c00;"><strong>Error:</strong> ${certData.error}</p>
+                        </div>
+                    </div>
+                    `;
+                    return;
+                }
+                
+                const analysis = certData.analysis || {};
+                const isQuantumSafe = analysis.is_quantum_safe || false;
+                const publicKeyPQC = analysis.public_key_is_pqc || false;
+                const signaturePQC = analysis.signature_is_pqc || false;
+                
+                html += `
+                <div class="section">
+                    <h2>Certificate ${index + 1} - Port ${certData.port} (Position #${certData.position})</h2>
+                    
+                    <!-- Certificate Information -->
+                    <h3>Certificate Information</h3>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Subject:</span>
+                            <span class="info-value">${certData.subject || 'N/A'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Issuer:</span>
+                            <span class="info-value">${certData.issuer || 'N/A'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Valid From:</span>
+                            <span class="info-value">${formatDatePDF(analysis.valid_from)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Valid Until:</span>
+                            <span class="info-value">${formatDatePDF(analysis.valid_until)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Serial Number:</span>
+                            <span class="info-value">${certData.serial_number || 'N/A'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Version:</span>
+                            <span class="info-value">${certData.version || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Cryptographic Details -->
+                    <h3>Cryptographic Analysis</h3>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Public Key Algorithm:</span>
+                            <span class="info-value">${analysis.public_key_algorithm || 'Unknown'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Key Size:</span>
+                            <span class="info-value">${analysis.key_size ? analysis.key_size + ' bits' : 'N/A'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Public Key Quantum Safety:</span>
+                            <span class="info-value">
+                                <span class="badge ${publicKeyPQC ? 'safe' : 'vulnerable'}">
+                                    ${publicKeyPQC ? '✓ Quantum Safe' : '⚠ Quantum Vulnerable'}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Signature Algorithm:</span>
+                            <span class="info-value">${analysis.signature_algorithm || 'Unknown'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Signature Quantum Safety:</span>
+                            <span class="info-value">
+                                <span class="badge ${signaturePQC ? 'safe' : 'vulnerable'}">
+                                    ${signaturePQC ? '✓ Quantum Safe' : '⚠ Quantum Vulnerable'}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Overall Status:</span>
+                            <span class="info-value">
+                                <span class="badge ${isQuantumSafe ? 'safe' : 'vulnerable'}">
+                                    ${isQuantumSafe ? '✓ Fully Quantum Safe' : '⚠ Quantum Vulnerable'}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    ${!isQuantumSafe ? `
+                    <h3>Migration Recommendations</h3>
+                    <div class="recommendation">
+                        <p><strong>This certificate uses classical cryptography that is vulnerable to quantum attacks.</strong></p>
+                        <p>Recommended Actions:</p>
+                        <ul style="margin-left: 20px; line-height: 1.8;">
+                            ${!publicKeyPQC ? `
+                            <li><strong>Public Key:</strong> Migrate to ML-KEM (CRYSTALS-Kyber) for quantum-safe key encapsulation</li>
+                            ` : ''}
+                            ${!signaturePQC ? `
+                            <li><strong>Signature:</strong> Migrate to ML-DSA (CRYSTALS-Dilithium) or FALCON for quantum-safe signatures</li>
+                            ` : ''}
+                            <li><strong>Timeline:</strong> Begin migration within 12-24 months</li>
+                            <li><strong>Standards:</strong> Follow NIST FIPS 203, 204, and 205</li>
+                        </ul>
+                    </div>
+                    ` : `
+                    <h3>Security Assessment</h3>
+                    <div class="recommendation" style="background: #d1fae5;">
+                        <p style="color: #065f46;"><strong>✓ This certificate is quantum-safe!</strong></p>
+                        <p style="color: #065f46;">Both the public key and signature algorithms are resistant to quantum attacks.</p>
+                    </div>
+                    `}
+                </div>
+                `;
+            });
+            
+            return html;
+        };
+
+        // Generate HTML content for the report
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Domain TLS Scan Report - QuantumCertify</title>
+                <meta charset="UTF-8">
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 900px;
+                        margin: 0 auto;
+                        padding: 40px 20px;
+                        background: white;
+                    }
+                    .header {
+                        text-align: center;
+                        border-bottom: 4px solid #00A3A1;
+                        padding-bottom: 20px;
+                        margin-bottom: 40px;
+                    }
+                    .header h1 {
+                        color: #00A3A1;
+                        margin: 0 0 10px 0;
+                        font-size: 32px;
+                        font-weight: 700;
+                    }
+                    .header .subtitle {
+                        color: #666;
+                        font-size: 16px;
+                        margin-bottom: 15px;
+                    }
+                    .header .generated {
+                        color: #888;
+                        font-size: 13px;
+                        font-style: italic;
+                    }
+                    .section {
+                        margin-bottom: 35px;
+                        padding: 25px;
+                        border-left: 4px solid #00A3A1;
+                        background: #f8fafb;
+                        border-radius: 0 8px 8px 0;
+                        page-break-inside: avoid;
+                    }
+                    .section h2 {
+                        color: #00A3A1;
+                        font-size: 22px;
+                        margin-bottom: 20px;
+                        font-weight: 600;
+                    }
+                    .section h3 {
+                        color: #00A3A1;
+                        font-size: 18px;
+                        margin: 20px 0 15px 0;
+                        font-weight: 600;
+                        padding-bottom: 8px;
+                        border-bottom: 2px solid #A0D9B4;
+                    }
+                    .info-grid {
+                        display: grid;
+                        gap: 12px;
+                    }
+                    .info-row {
+                        display: grid;
+                        grid-template-columns: 220px 1fr;
+                        gap: 15px;
+                        padding: 10px 0;
+                        border-bottom: 1px solid #e5e7eb;
+                    }
+                    .info-row:last-child {
+                        border-bottom: none;
+                    }
+                    .info-label {
+                        font-weight: 600;
+                        color: #555;
+                    }
+                    .info-value {
+                        color: #333;
+                        word-break: break-word;
+                    }
+                    .badge {
+                        display: inline-block;
+                        padding: 5px 15px;
+                        border-radius: 5px;
+                        font-size: 13px;
+                        font-weight: 600;
+                    }
+                    .badge.safe {
+                        background: #d1fae5;
+                        color: #065f46;
+                    }
+                    .badge.vulnerable {
+                        background: #fee2e2;
+                        color: #991b1b;
+                    }
+                    .recommendation {
+                        background: white;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin-top: 15px;
+                        border: 1px solid #e5e7eb;
+                        page-break-inside: avoid;
+                    }
+                    .recommendation p {
+                        color: #555;
+                        line-height: 1.7;
+                        margin-bottom: 10px;
+                    }
+                    .recommendation ul {
+                        margin-top: 10px;
+                    }
+                    .recommendation li {
+                        margin-bottom: 8px;
+                        color: #555;
+                    }
+                    .footer {
+                        margin-top: 60px;
+                        padding-top: 30px;
+                        border-top: 3px solid #e5e7eb;
+                        text-align: center;
+                        color: #666;
+                        font-size: 13px;
+                    }
+                    .footer p {
+                        margin: 5px 0;
+                    }
+                    .footer strong {
+                        color: #00A3A1;
+                    }
+                    @media print {
+                        body { padding: 20px; }
+                        .section { page-break-inside: avoid; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Domain TLS Scan Report</h1>
+                    <p class="subtitle">Comprehensive TLS Certificate Analysis</p>
+                    <p class="generated">Generated: ${formatDatePDF(new Date().toISOString())}</p>
+                </div>
+
+                <!-- Scan Summary -->
+                <div class="section">
+                    <h2>Scan Summary</h2>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Target Host:</span>
+                            <span class="info-value">${safeGet(scanResults, 'scan_info.host')}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Scanned Ports:</span>
+                            <span class="info-value">${scanResults.scan_info && scanResults.scan_info.scanned_ports ? scanResults.scan_info.scanned_ports.join(', ') : 'N/A'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Successful Ports:</span>
+                            <span class="info-value">${scanResults.successful_ports ? scanResults.successful_ports.length : 0}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Failed Ports:</span>
+                            <span class="info-value">${scanResults.failed_ports ? scanResults.failed_ports.length : 0}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Total Certificates Found:</span>
+                            <span class="info-value">${scanResults.successful_ports ? scanResults.successful_ports.reduce((sum, p) => sum + (p.cert_count || 0), 0) : 0}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Scan Duration:</span>
+                            <span class="info-value">${safeGet(scanResults, 'scan_info.scan_duration_ms')} ms</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Scan Timestamp:</span>
+                            <span class="info-value">${formatDatePDF(safeGet(scanResults, 'scan_info.timestamp'))}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificate Details -->
+                ${generateCertificateDetails()}
+
+                <div class="footer">
+                    <p><strong>QuantumCertify</strong> - Enterprise Security Solutions</p>
+                    <p>© 2025 QuantumCertify. All rights reserved.</p>
+                    <p>NIST-Compliant PQC Standards | Enterprise-Grade Security</p>
+                    <p style="margin-top: 10px; color: #888;">Contact: quantumcertify@gmail.com</p>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Open in new window and trigger print dialog for PDF save
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        if (printWindow) {
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            
+            // Wait for content to load, then trigger print
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.document.title = `QuantumCertify_DomainScan_${scanResults.scan_info.host}_${new Date().toISOString().split('T')[0]}`;
+                    printWindow.print();
+                    // Note: User can choose "Save as PDF" from print dialog
+                }, 500);
+            };
+        } else {
+            alert('Please allow popups to download the PDF report.');
+        }
     };
 
     return (
         <div className="domain-scanner-container">
             <div className="scanner-header">
-                <h1>🌐 Domain TLS Scanner</h1>
+                <h1>Domain TLS Scanner</h1>
                 <p className="scanner-description">
                     Scan any domain or IP address to analyze its TLS certificates for quantum safety
                 </p>
@@ -154,14 +541,14 @@ const DomainScanner = () => {
                             </>
                         ) : (
                             <>
-                                🔍 Start Scan
+                                Start Scan
                             </>
                         )}
                     </button>
                     
                     {scanning && (
                         <div className="info-message">
-                            <span className="spinner-icon">⏳</span>
+                            <span className="spinner-icon"></span>
                             <p>
                                 <strong>Scanning & Analyzing...</strong><br />
                                 Please wait while we fetch the TLS certificates and perform AI-powered 
@@ -181,6 +568,19 @@ const DomainScanner = () => {
 
             {scanResults && (
                 <div className="scan-results">
+                    {/* Results Header with Download Button */}
+                    <div className="results-header">
+                        <h2>Scan Results</h2>
+                        <button className="btn-download" onClick={downloadPDF}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download PDF Report
+                        </button>
+                    </div>
+
                     {/* Scan Summary */}
                     <div className="scan-summary">
                         <h2>Scan Summary</h2>
