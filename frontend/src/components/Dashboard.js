@@ -17,9 +17,8 @@ const Dashboard = () => {
     checkApiStatus();
     fetchDashboardStats();
     
-    const statsInterval = setInterval(fetchDashboardStats, 30000);
-    
-    return () => clearInterval(statsInterval);
+    // Removed auto-refresh to minimize database queries and reduce costs
+    // Stats will only refresh when user reloads the page
   }, []);
 
   const checkApiStatus = async () => {
