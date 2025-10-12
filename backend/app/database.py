@@ -35,24 +35,30 @@ else:
     # ODBC connection string format with environment variables
     odbc_str = (
         f"mssql+pyodbc://{DB_USERNAME}:{DB_PASSWORD}@{DB_SERVER}:{DB_PORT}/{DB_NAME}"
-        f"?driver={DB_DRIVER}&Encrypt=yes&TrustServerCertificate=no"
+        f"?driver={DB_DRIVER}&Encrypt=yes&TrustServerCertificate=no&MultipleActiveResultSets=False"
     )
 
-    # Create SQLAlchemy engine with additional security configurations
+    # Create SQLAlchemy engine with optimized settings for Azure SQL Database
     engine = create_engine(
         odbc_str,
-        pool_pre_ping=True,  # Enable connection health checks
-        pool_recycle=3600,   # Recycle connections every hour
-        pool_timeout=30,     # Wait up to 30 seconds for a connection from the pool
+        pool_pre_ping=True,  # Enable connection health checks before using
+        pool_recycle=1800,   # Recycle connections every 30 minutes (Azure SQL idle timeout is 30 min)
+        pool_timeout=120,    # Wait up to 120 seconds for a connection from the pool (increased from 60)
+        pool_size=5,         # Maintain 5 persistent connections in the pool (increased from 3)
+        max_overflow=10,     # Allow up to 10 additional connections (total max: 15)
         echo=os.getenv('DEBUG', 'false').lower() == 'true',  # Log SQL queries in debug mode
-        # SQL Server specific configurations - Railway has ODBC Driver 18
+        # SQL Server specific configurations - Optimized for Railway to Azure SQL cross-region
         connect_args={
-            "driver": DB_DRIVER,  # Use environment variable (ODBC Driver 18 for SQL Server)
+            "driver": DB_DRIVER,  # Use environment variable (ODBC Driver 17/18 for SQL Server)
             "TrustServerCertificate": "no",
             "Encrypt": "yes",
-            "Connection Timeout": "60",  # 60 seconds connection timeout
-            "Command Timeout": "60",     # 60 seconds command timeout
-            "Login Timeout": "60"        # 60 seconds login timeout
+            "Connection Timeout": "90",  # Increased to 90 seconds for cross-region reliability
+            "Login Timeout": "90",       # Increased to 90 seconds for initial connection
+            "Pooling": "True",           # Enable connection pooling at ODBC level
+            "MultipleActiveResultSets": "False",
+            "ApplicationIntent": "ReadWrite",
+            "ConnectRetryCount": "3",    # Retry connection 3 times on failure
+            "ConnectRetryInterval": "10" # Wait 10 seconds between retries
         }
     )
 
