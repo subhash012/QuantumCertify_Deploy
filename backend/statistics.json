@@ -1,7 +1,7 @@
 {
-  "total_analyzed": 21,
-  "quantum_safe_count": 0,
-  "classical_count": 21,
+  "total_analyzed": 254,
+  "quantum_safe_count": 26,
+  "classical_count": 230,
   "last_updated": "2025-10-11T14:13:14.752722",
   "data_source": "file"
 }
