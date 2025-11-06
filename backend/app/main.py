@@ -541,7 +541,7 @@ if ENVIRONMENT == "production":
 # Trusted host middleware for production domains only
 # Disable in DEBUG mode to allow localhost development
 if not DEBUG_MODE:
-    # Include Railway.app domains and localhost for health checks
+    # Include Railway.app, Render.com domains and localhost for health checks
     TRUSTED_HOSTS = [
         "quantumcertify.tech", 
         "www.quantumcertify.tech", 
@@ -549,6 +549,9 @@ if not DEBUG_MODE:
         "web-production-bf0b7.up.railway.app",  # Your specific Railway domain
         "*.railway.app",  # Railway.app domains
         "*.up.railway.app",  # Railway.app internal domains
+        "*.onrender.com",  # Render.com domains
+        "quantumcertify-backend.onrender.com",  # Your specific Render backend
+        "quantumcertify-frontend.onrender.com",  # Your specific Render frontend
         "testserver",  # For testing
         "localhost",  # For local health checks
         "127.0.0.1"   # For IP-based health checks
